@@ -1,8 +1,7 @@
 import me.sedlar.asm.ClassFactory;
 import me.sedlar.asm.ClassMethod;
-import me.sedlar.asm.pattern.nano.composite.BasicChainedSetterPattern;
-import me.sedlar.asm.pattern.nano.composite.BasicSetterPattern;
-import me.sedlar.asm.pattern.nano.composite.CompositePattern;
+import me.sedlar.asm.visitor.flow.ControlFlowGraph;
+import me.sedlar.asm.visitor.flow.ExecutionPath;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -13,7 +12,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,32 +23,28 @@ import java.util.Map;
 public class Debugger {
 
     private static final String TEST_CLASS_NAME = "Sample";
-    private static final CompositePattern[] COMPOSITE_PATTERNS = {
-            new BasicSetterPattern(), new BasicChainedSetterPattern()
-    };
 
     private static final Map<String, ClassMethod> methods = new HashMap<>();
 
     @Test
-    public void testNanoPatterns() {
+    public void testControlFlowGraph() {
         methods.values().forEach(cm -> {
             if (cm.name().contains("<")) {
                 return;
             }
-            System.out.println(cm.key());
-            System.out.println("  SIMPLE_NANO_PATTERNS: ");
-            cm.findSimpleNanoPatterns().forEach(patternName -> System.out.println("    " + patternName));
-            System.out.println("  ADVANCED_NANO_PATTERNS: ");
-            cm.findAdvancedNanoPatterns().forEach(patternName -> System.out.println("    " + patternName));
-            List<CompositePattern> matching = new ArrayList<>();
-            for (CompositePattern pattern : COMPOSITE_PATTERNS) {
-                if (pattern.matches(cm)) {
-                    matching.add(pattern);
+            if (cm.name().contains("cfg")) {
+                try {
+                    System.out.println(cm.key() + ":");
+                    ControlFlowGraph cfg = ControlFlowGraph.create(null, cm);
+                    ExecutionPath path = ExecutionPath.build(cfg);
+                    path.printTree();
+//                    System.out.println(cfg.toDot(start.get(), null));
+//                    System.out.println();
+//                    BufferedImage image = cfg.dotImage(start.get(), null);
+//                    ImageIO.write(image, "png", new File("./" + cm.key() + ".png"));
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            }
-            if (!matching.isEmpty()) {
-                System.out.println("  MATCHING_COMPOSITE_PATTERNS: ");
-                matching.forEach(cp -> System.out.println("    " + cp.getClass().getSimpleName()));
             }
         });
     }

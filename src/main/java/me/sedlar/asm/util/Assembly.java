@@ -131,6 +131,19 @@ public class Assembly implements Opcodes {
     }
 
     /**
+     * Gets the name of the given opcode.
+     *
+     * @param opcode The opcode.
+     * @return The name of the given opcode.
+     */
+    public static String opname(int opcode) {
+        if (opcode >= 0 && opcode < Printer.OPCODES.length) {
+            return Printer.OPCODES[opcode];
+        }
+        return Integer.toString(opcode);
+    }
+
+    /**
      * Renames the given field throughout the ClassFactory map with to given name.
      *
      * @param classes The map of classes to rename within.

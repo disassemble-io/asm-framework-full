@@ -1,6 +1,5 @@
 package me.sedlar.asm.visitor;
 
-import jdk.internal.org.objectweb.asm.util.Printer;
 import me.sedlar.asm.ClassMethodVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.Type;
