@@ -12,17 +12,16 @@ import me.sedlar.asm.pattern.nano.oop.FieldWriter;
 import me.sedlar.asm.pattern.nano.oop.ObjectCreator;
 import me.sedlar.asm.pattern.nano.oop.TypeManipulator;
 import me.sedlar.asm.util.Assembly;
+import me.sedlar.asm.visitor.flow.ControlFlowGraph;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.analysis.AnalyzerException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -50,6 +49,8 @@ public class ClassMethod {
     public final Handle handle;
 
     private List<String> simpleNanoPatterns, advancedNanoPatterns;
+
+    private ControlFlowGraph cfg;
 
     public ClassMethod(ClassFactory owner, MethodNode method) {
         this.owner = owner;
@@ -321,6 +322,33 @@ public class ClassMethod {
      */
     public int parameters() {
         return Type.getArgumentTypes(desc()).length;
+    }
+
+    /**
+     * Creates a ControlFlowGraph for this method.
+     *
+     * @param cached Retrieve by cache, if the graph has been built before.
+     * @return A ControlFlowGraph for this method.
+     */
+    public Optional<ControlFlowGraph> cfg(boolean cached) {
+        ControlFlowGraph graph = cfg;
+        if (!cached || cfg == null) {
+            try {
+                graph = ControlFlowGraph.create(null, this);
+            } catch (AnalyzerException e) {
+                e.printStackTrace();
+            }
+        }
+        return Optional.ofNullable(graph);
+    }
+
+    /**
+     * Creates a ControlFlowGraph for this method.
+     *
+     * @return A ControlFlowGraph for this method.
+     */
+    public Optional<ControlFlowGraph> cfg() {
+        return cfg(true);
     }
 
     @Override

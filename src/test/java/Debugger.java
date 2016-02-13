@@ -1,10 +1,13 @@
 import me.sedlar.asm.ClassFactory;
 import me.sedlar.asm.ClassMethod;
-import me.sedlar.asm.visitor.flow.ControlFlowGraph;
-import me.sedlar.asm.visitor.flow.ExecutionPath;
+import me.sedlar.asm.util.Assembly;
+import me.sedlar.asm.visitor.flow.ExecutionNode;
+import me.sedlar.asm.visitor.flow.FlowQuery;
+import me.sedlar.asm.visitor.flow.FlowQueryResult;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
@@ -20,7 +23,7 @@ import java.util.Map;
  * @author Tyler Sedlar
  * @since 2/1/16
  */
-public class Debugger {
+public class Debugger implements Opcodes {
 
     private static final String TEST_CLASS_NAME = "Sample";
 
@@ -34,14 +37,28 @@ public class Debugger {
             }
             if (cm.name().contains("cfg")) {
                 try {
-                    System.out.println(cm.key() + ":");
-                    ControlFlowGraph cfg = ControlFlowGraph.create(null, cm);
-                    ExecutionPath path = ExecutionPath.build(cfg);
-                    path.printTree();
-//                    System.out.println(cfg.toDot(start.get(), null));
-//                    System.out.println();
-//                    BufferedImage image = cfg.dotImage(start.get(), null);
-//                    ImageIO.write(image, "png", new File("./" + cm.key() + ".png"));
+                    long start = System.nanoTime();
+                    cm.cfg().ifPresent(cfg -> {
+                        List<FlowQueryResult> results = cfg.execution().query(
+                                new FlowQuery()
+                                        .opcode(ILOAD).name("root-loader")
+                                        .opcode(IF_ICMPGE).dist(1).branch()
+                                        .opcode(IINC)
+                                        .opcode(IF_ICMPGE).dist(5).branch()
+                                        .opcode(ISTORE)
+                                        .opcode(ILOAD)
+                        );
+                        System.out.println("query results: " + results.size());
+                        results.forEach(result -> result.findInstruction("root-loader")
+                                .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
+//                        cfg.execution().printTree();
+//                        System.out.println(cfg.toDot(start.get(), null));
+//                        System.out.println();
+//                        BufferedImage image = cfg.dotImage(start.get(), null);
+//                        ImageIO.write(image, "png", new File("./" + cm.key() + ".png"));
+                    });
+                    long end = System.nanoTime();
+                    System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

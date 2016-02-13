@@ -38,8 +38,11 @@ public class ControlFlowGraph {
      */
     public final Map<AbstractInsnNode, ControlFlowNode> nodes;
     public final ClassMethod method;
+
     private Map<Object, String> nodeIds = null;
     private int nodeId = 1;
+
+    private ExecutionPath execution;
 
     public ControlFlowGraph(Map<AbstractInsnNode, ControlFlowNode> nodes, ClassMethod method) {
         this.nodes = nodes;
@@ -176,8 +179,26 @@ public class ControlFlowGraph {
         return node;
     }
 
-    public ExecutionPath execution() {
+    /**
+     * Gets the execution path for the graph.
+     *
+     * @param cached Retrieve by cache, if the execution path has been built before.
+     * @return The execution path for the graph.
+     */
+    public ExecutionPath execution(boolean cached) {
+        if (cached && execution != null) {
+            return execution;
+        }
         return ExecutionPath.build(this);
+    }
+
+    /**
+     * Gets the execution path for the graph.
+     *
+     * @return The execution path for the graph.
+     */
+    public ExecutionPath execution() {
+        return execution(true);
     }
 
     /**
