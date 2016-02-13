@@ -357,14 +357,16 @@ public class ControlFlowGraph {
         String dotSource = toDot(start, highlight);
         String tempDir = System.getProperty("java.io.tmpdir");
         Optional<String> graphViz = EnvPath.find(entry -> entry.contains("Graphviz"));
-        if (!graphViz.isPresent()) {
+        boolean windows = System.getProperty("os.name").toLowerCase().contains("windows");
+        if (!graphViz.isPresent() && windows) {
             throw new IllegalStateException("GraphViz is not on Environment.PATH");
         }
-        File graphVizExe = new File(graphViz.get(), "dot.exe");
         File dotFile = new File(tempDir, method.key() + ".dot");
-        Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.TRUNCATE_EXISTING);
+        Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
         File imgFile = new File(tempDir, method.key() + ".png");
-        ProcessBuilder builder = new ProcessBuilder(graphVizExe.getAbsolutePath(), "-Tpng", dotFile.getAbsolutePath(),
+        String program = (windows ? new File(graphViz.get(), "dot.exe").getAbsolutePath() : "dot");
+        ProcessBuilder builder = new ProcessBuilder(program, "-Tpng", dotFile.getAbsolutePath(),
                 "-o", imgFile.getAbsolutePath());
         Process process = builder.start();
         process.waitFor();

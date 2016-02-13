@@ -20,7 +20,7 @@ public class EnvPath {
      */
     public static List<String> all() {
         List<String> pathList = new ArrayList<>();
-        String envPath = System.getenv("path");
+        String envPath = System.getenv("PATH");
         String[] paths = envPath.split(File.pathSeparator);
         Collections.addAll(pathList, paths);
         return pathList;
