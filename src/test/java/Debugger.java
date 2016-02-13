@@ -1,7 +1,6 @@
 import me.sedlar.asm.ClassFactory;
 import me.sedlar.asm.ClassMethod;
 import me.sedlar.asm.util.Assembly;
-import me.sedlar.asm.visitor.flow.ExecutionNode;
 import me.sedlar.asm.visitor.flow.FlowQuery;
 import me.sedlar.asm.visitor.flow.FlowQueryResult;
 import org.junit.BeforeClass;
@@ -41,12 +40,12 @@ public class Debugger implements Opcodes {
                     cm.cfg().ifPresent(cfg -> {
                         List<FlowQueryResult> results = cfg.execution().query(
                                 new FlowQuery()
-                                        .opcode(ILOAD).name("root-loader")
-                                        .opcode(IF_ICMPGE).dist(1).branch()
-                                        .opcode(IINC)
-                                        .opcode(IF_ICMPGE).dist(5).branch()
-                                        .opcode(ISTORE)
-                                        .opcode(ILOAD)
+                                        .stmtLoad().name("root-loader")
+                                        .stmtIf().dist(1).branch()
+                                        .stmtIncrement()
+                                        .stmtIf().dist(5).branch()
+                                        .stmtStore()
+                                        .stmtLoad()
                         );
                         System.out.println("query results: " + results.size());
                         results.forEach(result -> result.findInstruction("root-loader")
