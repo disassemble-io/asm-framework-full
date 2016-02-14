@@ -338,12 +338,12 @@ public class ControlFlowGraph {
             MethodInsnNode method = (MethodInsnNode) instruction;
             String cls = method.owner.substring(method.owner.lastIndexOf('/') + 1);
             cls = cls.replace('$', '.');
-            return (opname + "\n" + cls + "#" + method.name + "\n" + method.desc);
+            return (opname + "\n" + cls + "." + method.name + "\n" + method.desc);
         } else if (instruction instanceof FieldInsnNode) {
             FieldInsnNode field = (FieldInsnNode) instruction;
             String cls = field.owner.substring(field.owner.lastIndexOf('/') + 1);
             cls = cls.replace('$', '.');
-            return (opname + "\n" + cls + "#" + field.name + "\n" + field.desc);
+            return (opname + "\n" + cls + "." + field.name + "\n" + field.desc);
         } else if (instruction instanceof TypeInsnNode && instruction.getOpcode() == Opcodes.NEW) {
             return ("New " + ((TypeInsnNode) instruction).desc);
         }
