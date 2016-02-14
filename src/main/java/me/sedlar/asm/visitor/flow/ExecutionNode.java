@@ -16,7 +16,7 @@ public class ExecutionNode {
 
     private List<ExecutionNode> current = new ArrayList<>();
 
-    protected ExecutionNode previousExecutor;
+    protected ExecutionNode previousExecutor, previousNode, nextNode;
 
     public ExecutionNode(ExecutionPath path, ExecutionNode parent, ControlFlowNode source) {
         this.path = path;
@@ -31,6 +31,24 @@ public class ExecutionNode {
      */
     public List<List<ExecutionNode>> paths() {
         return paths;
+    }
+
+    /**
+     * Gets the ExecutionNode prior to this node.
+     *
+     * @return The ExecutionNode prior to this node.
+     */
+    public ExecutionNode previous() {
+        return previousNode;
+    }
+
+    /**
+     * Gets the ExecutionNode following this node.
+     *
+     * @return The ExecutionNode following this node.
+     */
+    public ExecutionNode next() {
+        return nextNode;
     }
 
     protected void add(ControlFlowGraph cfg, ExecutionNode eNode) {

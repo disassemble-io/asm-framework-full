@@ -18,13 +18,43 @@ public class ExecutionPath {
     private final List<ExecutionNode> nodes = new ArrayList<>();
     protected final Map<String, ExecutionNode> idMap = new HashMap<>();
 
+    private void findAll(ExecutionNode parent, Predicate<ExecutionNode> predicate, List<ExecutionNode> list) {
+        if (predicate.test(parent)) {
+            list.add(parent);
+        }
+        for (List<ExecutionNode> path : parent.paths()) {
+            for (ExecutionNode node : path) {
+                findAll(node, predicate, list);
+            }
+        }
+    }
+
+    /**
+     * Finds all nodes matching the given predicate.
+     *
+     * @param predicate The predicate to match against.
+     * @return A list of all nodes matching the given predicate.
+     */
+    public List<ExecutionNode> findAll(Predicate<ExecutionNode> predicate) {
+        List<ExecutionNode> result = new ArrayList<>();
+        for (ExecutionNode node : nodes) {
+            findAll(node, predicate, result);
+        }
+        return result;
+    }
+
+    /**
+     * Finds a list of results matching the given query.
+     *
+     * @param query The query to match.
+     * @return A list of results matching the given query.
+     */
     public List<FlowQueryResult> query(FlowQuery query) {
         List<FlowQueryResult> results = new ArrayList<>();
         List<Predicate<ExecutionNode>> predicates = query.predicates();
         if (predicates.isEmpty()) {
             return results;
         }
-        List<ExecutionNode> searching = nodes;
         List<ExecutionNode> lastMatch = null;
         boolean branching = false;
         List<ExecutionNode> endings = new ArrayList<>();
@@ -39,16 +69,14 @@ public class ExecutionPath {
                         nodeList.forEach(eNode -> eNode.previousExecutor = node);
                     });
                 }
-                searching = branchInstructions;
-                matching = searching.stream().filter(predicate::test).collect(Collectors.toList());
+                matching = branchInstructions.stream().filter(predicate::test).collect(Collectors.toList());
             } else {
                 if (i == 0) {
-                    matching = nodes.stream().filter(predicate::test).collect(Collectors.toList());
+                    matching = findAll(predicate);
                 } else {
                     matching = new ArrayList<>();
                     for (ExecutionNode node : lastMatch) {
-                        ExecutionNode result = findNext(searching.indexOf(node) + 1, searching, predicate,
-                                query.distAt(i));
+                        ExecutionNode result = findNext(node, predicate, query.distAt(i));
                         if (result != null) {
                             result.previousExecutor = node;
                             matching.add(result);
@@ -78,10 +106,10 @@ public class ExecutionPath {
         return results;
     }
 
-    private ExecutionNode findNext(int startIndex, List<ExecutionNode> searching,
-                                   Predicate<ExecutionNode> predicate, int maxDist) {
-        for (int i = startIndex; i < searching.size() && i < (startIndex + maxDist); i++) {
-            ExecutionNode node = searching.get(i);
+    private ExecutionNode findNext(ExecutionNode start, Predicate<ExecutionNode> predicate, int maxDist) {
+        ExecutionNode node = start;
+        int jump = 0;
+        while ((node = node.next()) != null && (jump == -1 || jump++ < maxDist)) {
             if (predicate.test(node)) {
                 return node;
             }
@@ -94,22 +122,8 @@ public class ExecutionPath {
         idMap.put(cfg.idFor(eNode.source), eNode);
     }
 
-    private ExecutionNode findById(String id) {
+    protected ExecutionNode findById(String id) {
         return idMap.get(id);
-    }
-
-    private static void addSuccessors(ControlFlowGraph cfg, ExecutionPath path, ExecutionNode eNode,
-                                      ExecutionNode parent, List<String> added) {
-        String nodeId = cfg.idFor(eNode.source);
-        if (!added.contains(nodeId)) {
-            added.add(nodeId);
-            eNode.source.successors.forEach(subNode -> {
-                ExecutionNode eSubNode = new ExecutionNode(path, parent, subNode);
-                parent.add(cfg, eSubNode);
-                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent), added);
-            });
-            parent.branch();
-        }
     }
 
     private void print(String prefix, ExecutionNode node) {
@@ -139,6 +153,36 @@ public class ExecutionPath {
         }
     }
 
+    private static void addSuccessors(ControlFlowGraph cfg, ExecutionPath path, ExecutionNode eNode,
+                                      ExecutionNode parent, List<String> added,
+                                      List<ExecutionNode> successors) {
+        String nodeId = cfg.idFor(eNode.source);
+        if (!added.contains(nodeId)) {
+            added.add(nodeId);
+            path.idMap.put(nodeId, eNode);
+            eNode.source.successors.forEach(subNode -> {
+                ExecutionNode eSubNode = new ExecutionNode(path, parent, subNode);
+                parent.add(cfg, eSubNode);
+                successors.add(eSubNode);
+                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent),
+                        added, successors);
+            });
+            parent.branch();
+        }
+    }
+
+    private static void setNextNodes(List<ExecutionNode> nodes) {
+        ExecutionNode previous = null;
+        for (ExecutionNode node : nodes) {
+            if (previous != null) {
+                previous.nextNode = node;
+                node.previousNode = previous;
+            }
+            node.paths().forEach(ExecutionPath::setNextNodes);
+            previous = node;
+        }
+    }
+
     public static ExecutionPath build(ControlFlowGraph cfg) {
         ExecutionPath path = new ExecutionPath();
         AbstractInsnNode insn = cfg.method.instructions().getFirst();
@@ -150,13 +194,15 @@ public class ExecutionPath {
                 if (path.findById(nodeId) == null) {
                     ExecutionNode eNode = new ExecutionNode(path, null, node);
                     if (eNode.source.successors.size() > 1) {
-                        addSuccessors(cfg, path, eNode, eNode, added);
+                        List<ExecutionNode> successors = new ArrayList<>();
+                        addSuccessors(cfg, path, eNode, eNode, added, successors);
                     }
                     path.add(cfg, eNode);
                 }
             }
             insn = insn.getNext();
         }
+        setNextNodes(path.nodes);
         return path;
     }
 }
