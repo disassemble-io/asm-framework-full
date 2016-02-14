@@ -55,10 +55,10 @@ public class ControlFlowGraph {
      * provided with an existing graph, then the graph is simply populated, not
      * created. This allows subclassing of the graph instance, if necessary.
      *
-     * @param initial   usually null, but can point to an existing instance of a
-     *                  {@link ControlFlowGraph} in which that graph is reused (but
-     *                  populated with new edges)
-     * @param method    the method to be analyzed
+     * @param initial usually null, but can point to an existing instance of a
+     *                {@link ControlFlowGraph} in which that graph is reused (but
+     *                populated with new edges)
+     * @param method  the method to be analyzed
      * @return a {@link ControlFlowGraph} with nodes for the control flow in the
      * given method
      * @throws AnalyzerException if the underlying bytecode library is unable to
@@ -73,10 +73,12 @@ public class ControlFlowGraph {
                 AbstractInsnNode to = instructions.get(successor);
                 graph.add(from, to);
             }
+
             protected boolean newControlFlowExceptionEdge(int insn, TryCatchBlockNode tcb) {
                 graph.exception(tcb);
                 return super.newControlFlowExceptionEdge(insn, tcb);
             }
+
             protected boolean newControlFlowExceptionEdge(int insn, int successor) {
                 AbstractInsnNode from = instructions.get(insn);
                 AbstractInsnNode to = instructions.get(successor);
@@ -189,7 +191,7 @@ public class ControlFlowGraph {
         if (cached && execution != null) {
             return execution;
         }
-        return ExecutionPath.build(this);
+        return (execution = ExecutionPath.build(this));
     }
 
     /**
@@ -295,10 +297,10 @@ public class ControlFlowGraph {
                     }
                     builder.append(";\n");
                 }
-                for (ControlFlowNode to : node.exceptions) {
-                    builder.append(idFor(node)).append(" -> ").append(idFor(to));
-                    builder.append(" [label=\"exception\"];\n");
-                }
+//                for (ControlFlowNode to : node.exceptions) {
+//                    builder.append(idFor(node)).append(" -> ").append(idFor(to));
+//                    builder.append(" [label=\"exception\"];\n");
+//                }
             }
             instruction = instruction.getNext();
         }
@@ -368,31 +370,35 @@ public class ControlFlowGraph {
      * Creates a PNG image of the graph.
      * This requires GraphViz's bin directory to be on the env path.
      *
-     * @param start The starting instruction.
+     * @param start     The starting instruction.
      * @param highlight The nodes to highlight.
      * @return A PNG image of the graph.
      * @throws IOException
      */
-    public BufferedImage dotImage(AbstractInsnNode start, Set<ControlFlowNode> highlight)
-            throws IOException, InterruptedException {
-        String dotSource = toDot(start, highlight);
-        String tempDir = System.getProperty("java.io.tmpdir");
-        Optional<String> graphViz = EnvPath.find(entry -> entry.contains("Graphviz"));
-        boolean windows = System.getProperty("os.name").toLowerCase().contains("windows");
-        if (!graphViz.isPresent() && windows) {
-            throw new IllegalStateException("GraphViz is not on Environment.PATH");
+    public BufferedImage dotImage(AbstractInsnNode start, Set<ControlFlowNode> highlight) {
+        try {
+            String dotSource = toDot(start, highlight);
+            String tempDir = System.getProperty("java.io.tmpdir");
+            Optional<String> graphViz = EnvPath.find(entry -> entry.contains("Graphviz"));
+            boolean windows = System.getProperty("os.name").toLowerCase().contains("windows");
+            if (!graphViz.isPresent() && windows) {
+                throw new IllegalStateException("GraphViz is not on Environment.PATH");
+            }
+            File dotFile = new File(tempDir, method.key() + ".dot");
+            Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+            File imgFile = new File(tempDir, method.key() + ".png");
+            String program = (windows ? new File(graphViz.get(), "dot.exe").getAbsolutePath() : "dot");
+            ProcessBuilder builder = new ProcessBuilder(program, "-Tpng", dotFile.getAbsolutePath(),
+                    "-o", imgFile.getAbsolutePath());
+            Process process = builder.start();
+            process.waitFor();
+            BufferedImage image = ImageIO.read(imgFile);
+            Files.delete(Paths.get(imgFile.toURI()));
+            return image;
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return null;
         }
-        File dotFile = new File(tempDir, method.key() + ".dot");
-        Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING);
-        File imgFile = new File(tempDir, method.key() + ".png");
-        String program = (windows ? new File(graphViz.get(), "dot.exe").getAbsolutePath() : "dot");
-        ProcessBuilder builder = new ProcessBuilder(program, "-Tpng", dotFile.getAbsolutePath(),
-                "-o", imgFile.getAbsolutePath());
-        Process process = builder.start();
-        process.waitFor();
-        BufferedImage image = ImageIO.read(imgFile);
-        Files.delete(Paths.get(imgFile.toURI()));
-        return image;
     }
 }
