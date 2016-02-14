@@ -326,6 +326,7 @@ public class ControlFlowGraph {
 
     protected String dotDescribe(ControlFlowNode node) {
         AbstractInsnNode instruction = node.instruction;
+        String opname = Assembly.opname(instruction.getOpcode());
         if (instruction instanceof LabelNode) {
             return "Label";
         } else if (instruction instanceof LineNumberNode) {
@@ -337,14 +338,14 @@ public class ControlFlowGraph {
             MethodInsnNode method = (MethodInsnNode) instruction;
             String cls = method.owner.substring(method.owner.lastIndexOf('/') + 1);
             cls = cls.replace('$', '.');
-            return "Call " + cls + "#" + method.name;
+            return (opname + "\n" + cls + "#" + method.name + "\n" + method.desc);
         } else if (instruction instanceof FieldInsnNode) {
             FieldInsnNode field = (FieldInsnNode) instruction;
             String cls = field.owner.substring(field.owner.lastIndexOf('/') + 1);
             cls = cls.replace('$', '.');
-            return "Field " + cls + "#" + field.name;
+            return (opname + "\n" + cls + "#" + field.name + "\n" + field.desc);
         } else if (instruction instanceof TypeInsnNode && instruction.getOpcode() == Opcodes.NEW) {
-            return "New " + ((TypeInsnNode) instruction).desc;
+            return ("New " + ((TypeInsnNode) instruction).desc);
         }
         StringBuilder builder = new StringBuilder();
         String opcodeName = Assembly.opname(instruction.getOpcode());
@@ -373,7 +374,6 @@ public class ControlFlowGraph {
      * @param start     The starting instruction.
      * @param highlight The nodes to highlight.
      * @return A PNG image of the graph.
-     * @throws IOException
      */
     public BufferedImage dotImage(AbstractInsnNode start, Set<ControlFlowNode> highlight) {
         try {

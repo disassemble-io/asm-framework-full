@@ -6,6 +6,7 @@ import org.objectweb.asm.tree.FrameNode;
 import org.objectweb.asm.tree.LabelNode;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -57,6 +58,7 @@ public class ExecutionPath {
         }
         List<ExecutionNode> lastMatch = null;
         boolean branching = false;
+        FlowQuery.BranchType branchType = null;
         List<ExecutionNode> endings = new ArrayList<>();
         for (int i = 0; i < predicates.size(); i++) {
             Predicate<ExecutionNode> predicate = predicates.get(i);
@@ -64,10 +66,17 @@ public class ExecutionPath {
             if (branching) {
                 List<ExecutionNode> branchInstructions = new ArrayList<>();
                 for (ExecutionNode node : lastMatch) {
-                    node.paths().forEach(nodeList -> {
+                    Consumer<List<ExecutionNode>> consumer = (nodeList -> {
                         branchInstructions.addAll(nodeList);
                         nodeList.forEach(eNode -> eNode.previousExecutor = node);
                     });
+                    if (branchType == FlowQuery.BranchType.TRUE) {
+                        node.truePath().ifPresent(consumer);
+                    } else if (branchType == FlowQuery.BranchType.FALSE) {
+                        node.falsePath().ifPresent(consumer);
+                    } else {
+                        node.paths().forEach(consumer);
+                    }
                 }
                 matching = branchInstructions.stream().filter(predicate::test).collect(Collectors.toList());
             } else {
@@ -92,6 +101,7 @@ public class ExecutionPath {
             }
             lastMatch = matching;
             branching = query.branchesAt(i);
+            branchType = query.branchTypeAt(i);
         }
         for (ExecutionNode node : endings) {
             List<ExecutionNode> hierarchy = new ArrayList<>();
@@ -147,6 +157,9 @@ public class ExecutionPath {
         }
     }
 
+    /**
+     * Prints out the instruction flow in a tree-like structure.
+     */
     public void printTree() {
         for (ExecutionNode node : nodes) {
             print("", node);
@@ -183,6 +196,12 @@ public class ExecutionPath {
         }
     }
 
+    /**
+     * Builds an ExecutionPath for the given ControlFlowGraph.
+     *
+     * @param cfg The ControlFlowGraph to build an ExecutionPath for.
+     * @return An ExecutionPath for the given ControlFlowGraph.
+     */
     public static ExecutionPath build(ControlFlowGraph cfg) {
         ExecutionPath path = new ExecutionPath();
         AbstractInsnNode insn = cfg.method.instructions().getFirst();
@@ -193,7 +212,7 @@ public class ExecutionPath {
                 String nodeId = cfg.idFor(node);
                 if (path.findById(nodeId) == null) {
                     ExecutionNode eNode = new ExecutionNode(path, null, node);
-                    if (eNode.source.successors.size() > 1) {
+                    if (node.successors.size() > 1) {
                         List<ExecutionNode> successors = new ArrayList<>();
                         addSuccessors(cfg, path, eNode, eNode, added, successors);
                     }

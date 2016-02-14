@@ -1,7 +1,11 @@
 package me.sedlar.asm.visitor.flow;
 
+import org.objectweb.asm.tree.JumpInsnNode;
+import org.objectweb.asm.tree.LabelNode;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Tyler Sedlar
@@ -9,7 +13,7 @@ import java.util.List;
  */
 public class ExecutionNode {
 
-    private final List<List<ExecutionNode>> paths = new ArrayList<>();
+    private final List<List<ExecutionNode>> paths = new ArrayList<>(2);
     public final ExecutionPath path;
     public final ExecutionNode parent;
     public final ControlFlowNode source;
@@ -31,6 +35,43 @@ public class ExecutionNode {
      */
     public List<List<ExecutionNode>> paths() {
         return paths;
+    }
+
+    /**
+     * Gets the path that branches to a true value.
+     *
+     * @return The path that branches to a true value.
+     */
+    public Optional<List<ExecutionNode>> truePath() {
+        if (paths.size() == 1) {
+            return Optional.of(paths.get(0));
+        }
+        if (source.instruction instanceof JumpInsnNode) {
+            LabelNode label = ((JumpInsnNode) source.instruction).label;
+            for (List<ExecutionNode> path : paths()) {
+                if (label == path.get(0).source.instruction) {
+                    return Optional.of(path);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Gets the path that branches to a false value.
+     *
+     * @return The path that branches to a false value.
+     */
+    public Optional<List<ExecutionNode>> falsePath() {
+        if (source.instruction instanceof JumpInsnNode) {
+            LabelNode label = ((JumpInsnNode) source.instruction).label;
+            for (List<ExecutionNode> path : paths()) {
+                if (label != path.get(0).source.instruction) {
+                    return Optional.of(path);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     /**

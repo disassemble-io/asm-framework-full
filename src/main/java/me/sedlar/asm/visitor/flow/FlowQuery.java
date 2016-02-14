@@ -20,7 +20,13 @@ public class FlowQuery implements Opcodes {
     private final List<Integer> branches = new ArrayList<>();
     private final Map<Integer, Integer> dists = new HashMap<>();
     private final Map<Integer, String> names = new HashMap<>();
+    private final Map<Integer, BranchType> branchTypes = new HashMap<>();
 
+    /**
+     * Gets a list of predicates constructed from this query.
+     *
+     * @return A list of predicates constructed from this query.
+     */
     public List<Predicate<ExecutionNode>> predicates() {
         return predicates;
     }
@@ -228,7 +234,7 @@ public class FlowQuery implements Opcodes {
      * @return This FlowQuery chained with a predicate checking for an INVOKEVIRTUAL matching the given arguments.
      */
     public FlowQuery stmtInvokeVirtual(Supplier<String> owner, Supplier<String> desc) {
-        predicates.add(fieldPredicate(INVOKEVIRTUAL, owner, desc));
+        predicates.add(methodPredicate(INVOKEVIRTUAL, owner, desc));
         return this;
     }
 
@@ -240,7 +246,7 @@ public class FlowQuery implements Opcodes {
      * @return This FlowQuery chained with a predicate checking for an INVOKESTATIC matching the given arguments.
      */
     public FlowQuery stmtInvokeStatic(Supplier<String> owner, Supplier<String> desc) {
-        predicates.add(fieldPredicate(INVOKESTATIC, owner, desc));
+        predicates.add(methodPredicate(INVOKESTATIC, owner, desc));
         return this;
     }
 
@@ -252,7 +258,7 @@ public class FlowQuery implements Opcodes {
      * @return This FlowQuery chained with a predicate checking for an INVOKESPECIAL matching the given arguments.
      */
     public FlowQuery stmtInvokeSpecial(Supplier<String> owner, Supplier<String> desc) {
-        predicates.add(fieldPredicate(INVOKESPECIAL, owner, desc));
+        predicates.add(methodPredicate(INVOKESPECIAL, owner, desc));
         return this;
     }
 
@@ -264,7 +270,7 @@ public class FlowQuery implements Opcodes {
      * @return This FlowQuery chained with a predicate checking for an INVOKEINTERFACE matching the given arguments.
      */
     public FlowQuery stmtInvokeInterface(Supplier<String> owner, Supplier<String> desc) {
-        predicates.add(fieldPredicate(INVOKEINTERFACE, owner, desc));
+        predicates.add(methodPredicate(INVOKEINTERFACE, owner, desc));
         return this;
     }
 
@@ -555,6 +561,28 @@ public class FlowQuery implements Opcodes {
     }
 
     /**
+     * Branches at the prior chained predicate, accepting only a true branch.
+     *
+     * @return This FlowQuery with a branch at the prior predicate, accepting only a true branch.
+     */
+    public FlowQuery branchTrue() {
+        branch();
+        branchTypes.put(predicates.size() - 1, BranchType.TRUE);
+        return this;
+    }
+
+    /**
+     * Branches at the prior chained predicate, accepting only a false branch.
+     *
+     * @return This FlowQuery with a branch at the prior predicate, accepting only a false branch.
+     */
+    public FlowQuery branchFalse() {
+        branch();
+        branchTypes.put(predicates.size() - 1, BranchType.FALSE);
+        return this;
+    }
+
+    /**
      * Checks whether there is a branch at the given index.
      *
      * @param index The index to check for a branch at.
@@ -562,6 +590,16 @@ public class FlowQuery implements Opcodes {
      */
     public boolean branchesAt(int index) {
         return branches.contains(index);
+    }
+
+    /**
+     * Gets the BranchType for the given index.
+     *
+     * @param index The index to check at.
+     * @return The BranchType for the given index.
+     */
+    public BranchType branchTypeAt(int index) {
+        return (branchTypes.containsKey(index) ? branchTypes.get(index) : BranchType.DEFAULT);
     }
 
     /**
@@ -604,5 +642,9 @@ public class FlowQuery implements Opcodes {
      */
     public String nameAt(int index) {
         return names.get(index);
+    }
+
+    public enum BranchType {
+        DEFAULT, TRUE, FALSE
     }
 }

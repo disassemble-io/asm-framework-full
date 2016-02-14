@@ -76,7 +76,7 @@ Temporary Items
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
-# Package Files #
+# Package Files
 *.war
 *.ear
 
@@ -85,3 +85,6 @@ hs_err_pid*
 
 # Ignore maven target
 target/
+
+# Project specifics
+src/test/excluded-java/*

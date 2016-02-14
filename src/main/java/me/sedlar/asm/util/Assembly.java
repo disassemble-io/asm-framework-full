@@ -391,43 +391,43 @@ public class Assembly implements Opcodes {
         if (op == -1) {
             return insn.toString();
         }
-        StringBuilder sb = new StringBuilder();
-        sb.append(Printer.OPCODES[op]);
+        StringBuilder builder = new StringBuilder();
+        builder.append(Printer.OPCODES[op]);
         switch (insn.getType()) {
             case INT_INSN: {
-                sb.append(' ');
-                sb.append(((IntInsnNode) insn).operand);
+                builder.append(' ');
+                builder.append(((IntInsnNode) insn).operand);
                 break;
             }
             case VAR_INSN: {
-                sb.append(' ');
-                sb.append('#');
-                sb.append(((VarInsnNode) insn).var);
+                builder.append(' ');
+                builder.append('#');
+                builder.append(((VarInsnNode) insn).var);
                 break;
             }
             case TYPE_INSN: {
-                sb.append(' ');
-                sb.append(((TypeInsnNode) insn).desc);
+                builder.append(' ');
+                builder.append(((TypeInsnNode) insn).desc);
                 break;
             }
             case FIELD_INSN: {
                 FieldInsnNode fin = (FieldInsnNode) insn;
-                sb.append(' ');
-                sb.append(fin.owner);
-                sb.append('.');
-                sb.append(fin.name);
-                sb.append(' ');
-                sb.append(fin.desc);
+                builder.append(' ');
+                builder.append(fin.owner);
+                builder.append('.');
+                builder.append(fin.name);
+                builder.append(' ');
+                builder.append(fin.desc);
                 break;
             }
             case METHOD_INSN: {
                 MethodInsnNode min = (MethodInsnNode) insn;
-                sb.append(' ');
-                sb.append(min.owner);
-                sb.append('.');
-                sb.append(min.name);
-                sb.append(' ');
-                sb.append(min.desc);
+                builder.append(' ');
+                builder.append(min.owner);
+                builder.append('.');
+                builder.append(min.name);
+                builder.append(' ');
+                builder.append(min.desc);
                 break;
             }
             case JUMP_INSN:
@@ -437,30 +437,30 @@ public class Assembly implements Opcodes {
             }
             case LDC_INSN: {
                 Object cst = ((LdcInsnNode) insn).cst;
-                sb.append(' ');
-                sb.append(cst.getClass().getName());
-                sb.append(' ');
-                sb.append(cst);
+                builder.append(' ');
+                builder.append(cst.getClass().getName());
+                builder.append(' ');
+                builder.append(cst);
                 break;
             }
             case IINC_INSN: {
                 IincInsnNode iin = (IincInsnNode) insn;
-                sb.append(' ');
-                sb.append('#');
-                sb.append(iin.var);
-                sb.append(' ');
-                sb.append(iin.incr);
+                builder.append(' ');
+                builder.append('#');
+                builder.append(iin.var);
+                builder.append(' ');
+                builder.append(iin.incr);
                 break;
             }
             case MULTIANEWARRAY_INSN: {
                 MultiANewArrayInsnNode m = (MultiANewArrayInsnNode) insn;
-                sb.append(' ');
-                sb.append(m.desc);
-                sb.append(' ');
-                sb.append(m.dims);
+                builder.append(' ');
+                builder.append(m.desc);
+                builder.append(' ');
+                builder.append(m.dims);
                 break;
             }
         }
-        return sb.toString();
+        return builder.toString();
     }
 }
