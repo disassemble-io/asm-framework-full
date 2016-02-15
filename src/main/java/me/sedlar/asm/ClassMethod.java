@@ -334,7 +334,7 @@ public class ClassMethod {
         ControlFlowGraph graph = cfg;
         if (!cached || cfg == null) {
             try {
-                graph = ControlFlowGraph.create(null, this);
+                graph = (cfg = ControlFlowGraph.create(null, this));
             } catch (AnalyzerException e) {
                 e.printStackTrace();
             }

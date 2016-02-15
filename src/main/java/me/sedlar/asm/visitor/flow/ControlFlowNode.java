@@ -29,26 +29,36 @@ public class ControlFlowNode {
     /**
      * Any normal successors (e.g. following instruction, or goto or conditional flow)
      */
-    public final List<ControlFlowNode> successors = new ArrayList<>(2);
+    public final List<ControlFlowNode> successors = new ArrayList<>();
+
+    public final List<ControlFlowNode> predecessors = new ArrayList<>();
 
     /**
      * Any abnormal successors (e.g. the handler to go to following an exception)
      */
-    public final List<ControlFlowNode> exceptions = new ArrayList<>(1);
+    public final List<ControlFlowNode> exceptions = new ArrayList<>();
+
+    protected String id;
+
+    public boolean backwards;
 
     /**
      * Constructs a new control graph node
      *
      * @param instruction the instruction to associate with this node
      */
-    public ControlFlowNode(ControlFlowGraph graph, AbstractInsnNode instruction) {
+    public ControlFlowNode(ControlFlowGraph graph, AbstractInsnNode instruction, boolean backwards) {
         this.graph = graph;
         this.instruction = instruction;
+        this.backwards = backwards;
     }
 
     void addSuccessor(ControlFlowNode node) {
         if (!successors.contains(node)) {
             successors.add(node);
+        }
+        if (!node.predecessors.contains(this)) {
+            node.predecessors.add(this);
         }
     }
 

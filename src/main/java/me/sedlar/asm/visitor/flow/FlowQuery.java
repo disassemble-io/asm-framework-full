@@ -1,5 +1,8 @@
 package me.sedlar.asm.visitor.flow;
 
+import me.sedlar.asm.ClassFactory;
+import me.sedlar.asm.ClassMethod;
+import me.sedlar.asm.util.Query;
 import me.sedlar.asm.util.StringMatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
@@ -12,15 +15,33 @@ import java.util.function.Supplier;
  * @author Tyler Sedlar
  * @since 2/12/2016
  */
-public class FlowQuery implements Opcodes {
+public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implements Opcodes {
 
     public static final int DEFAULT_MAX_DISTANCE = 10;
+
+    private boolean stopAtFirst = true;
+    private Predicate<ClassFactory> restrictToClass;
+    private Predicate<ClassMethod> restrictToMethod;
 
     private final List<Predicate<ExecutionNode>> predicates = new ArrayList<>();
     private final List<Integer> branches = new ArrayList<>();
     private final Map<Integer, Integer> dists = new HashMap<>();
     private final Map<Integer, String> names = new HashMap<>();
     private final Map<Integer, BranchType> branchTypes = new HashMap<>();
+
+    @Override
+    public Optional<List<FlowQueryResult>> find(ControlFlowGraph cfg) {
+        if (restrictToClass == null || restrictToClass.test(cfg.method.owner)) {
+            if (restrictToMethod == null || restrictToMethod.test(cfg.method)) {
+                List<FlowQueryResult> results = cfg.execution().query(this);
+                if (stopAtFirst && !results.isEmpty()) {
+                    lock();
+                }
+                return Optional.ofNullable(results);
+            }
+        }
+        return Optional.empty();
+    }
 
     /**
      * Gets a list of predicates constructed from this query.
@@ -29,6 +50,38 @@ public class FlowQuery implements Opcodes {
      */
     public List<Predicate<ExecutionNode>> predicates() {
         return predicates;
+    }
+
+    /**
+     * Sets this FlowQuery to continuously fetch all results, not only the first.
+     *
+     * @return This FlowQuery chained to continuously fetch all results, not only the first.
+     */
+    public FlowQuery continuous() {
+        stopAtFirst = false;
+        return this;
+    }
+
+    /**
+     * Sets this FlowQuery to only query classes that match the given predicate.
+     *
+     * @param predicate The predicate to match against.
+     * @return This FlowQuery chained to only query classes that match the given predicate.
+     */
+    public FlowQuery restrictToClass(Predicate<ClassFactory> predicate) {
+        restrictToClass = predicate;
+        return this;
+    }
+
+    /**
+     * Sets this FlowQuery to only query methods that match the given predicate.
+     *
+     * @param predicate The predicate to match against.
+     * @return This FlowQuery chained to only query methods that match the given predicate.
+     */
+    public FlowQuery restrictToMethod(Predicate<ClassMethod> predicate) {
+        restrictToMethod = predicate;
+        return this;
     }
 
     /**

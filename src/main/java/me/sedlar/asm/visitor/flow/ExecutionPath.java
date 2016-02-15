@@ -2,11 +2,8 @@ package me.sedlar.asm.visitor.flow;
 
 import me.sedlar.asm.util.Assembly;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.FrameNode;
-import org.objectweb.asm.tree.LabelNode;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -58,7 +55,6 @@ public class ExecutionPath {
         }
         List<ExecutionNode> lastMatch = null;
         boolean branching = false;
-        FlowQuery.BranchType branchType = null;
         List<ExecutionNode> endings = new ArrayList<>();
         for (int i = 0; i < predicates.size(); i++) {
             Predicate<ExecutionNode> predicate = predicates.get(i);
@@ -66,17 +62,10 @@ public class ExecutionPath {
             if (branching) {
                 List<ExecutionNode> branchInstructions = new ArrayList<>();
                 for (ExecutionNode node : lastMatch) {
-                    Consumer<List<ExecutionNode>> consumer = (nodeList -> {
+                    node.paths().forEach(nodeList -> {
                         branchInstructions.addAll(nodeList);
                         nodeList.forEach(eNode -> eNode.previousExecutor = node);
                     });
-                    if (branchType == FlowQuery.BranchType.TRUE) {
-                        node.truePath().ifPresent(consumer);
-                    } else if (branchType == FlowQuery.BranchType.FALSE) {
-                        node.falsePath().ifPresent(consumer);
-                    } else {
-                        node.paths().forEach(consumer);
-                    }
                 }
                 matching = branchInstructions.stream().filter(predicate::test).collect(Collectors.toList());
             } else {
@@ -101,7 +90,6 @@ public class ExecutionPath {
             }
             lastMatch = matching;
             branching = query.branchesAt(i);
-            branchType = query.branchTypeAt(i);
         }
         for (ExecutionNode node : endings) {
             List<ExecutionNode> hierarchy = new ArrayList<>();
@@ -119,7 +107,7 @@ public class ExecutionPath {
     private ExecutionNode findNext(ExecutionNode start, Predicate<ExecutionNode> predicate, int maxDist) {
         ExecutionNode node = start;
         int jump = 0;
-        while ((node = node.next()) != null && (jump == -1 || jump++ < maxDist)) {
+        while ((node = node.nextNode) != null && (jump == -1 || jump++ < maxDist)) {
             if (predicate.test(node)) {
                 return node;
             }
@@ -137,28 +125,26 @@ public class ExecutionPath {
     }
 
     private void print(String prefix, ExecutionNode node) {
-        if (!(node.source.instruction instanceof LabelNode || node.source.instruction instanceof FrameNode)) {
-            String label = (prefix + Assembly.toString(node.source.instruction));
-            boolean layered = !node.paths().isEmpty();
-            if (layered) {
-                label += " {";
+        String label = (prefix + Assembly.toString(node.source.instruction));
+        boolean layered = !node.paths().isEmpty();
+        if (layered) {
+            label += " {";
+        }
+        System.out.println(label);
+        for (List<ExecutionNode> path : node.paths()) {
+            System.out.println(prefix + "  {");
+            for (ExecutionNode subNode : path) {
+                print(prefix + "    ", subNode);
             }
-            System.out.println(label);
-            for (List<ExecutionNode> path : node.paths()) {
-                System.out.println(prefix + "  {");
-                for (ExecutionNode subNode : path) {
-                    print(prefix + "    ", subNode);
-                }
-                System.out.println(prefix + "  }");
-            }
-            if (layered) {
-                System.out.println(prefix + "}");
-            }
+            System.out.println(prefix + "  }");
+        }
+        if (layered) {
+            System.out.println(prefix + "}");
         }
     }
 
     /**
-     * Prints out the instruction flow in a tree-like structure.
+     * Prints out the paths as a tree-like structure.
      */
     public void printTree() {
         for (ExecutionNode node : nodes) {
@@ -167,19 +153,23 @@ public class ExecutionPath {
     }
 
     private static void addSuccessors(ControlFlowGraph cfg, ExecutionPath path, ExecutionNode eNode,
-                                      ExecutionNode parent, List<String> added,
-                                      List<ExecutionNode> successors) {
-        String nodeId = cfg.idFor(eNode.source);
-        if (!added.contains(nodeId)) {
-            added.add(nodeId);
-            path.idMap.put(nodeId, eNode);
-            eNode.source.successors.forEach(subNode -> {
+                                      ExecutionNode parent, Set<String> added) {
+        if (eNode.source.backwards || (parent != null && parent.source.backwards)) {
+            return;
+        }
+        eNode.source.successors.forEach(subNode -> {
+            if (!added.contains(subNode.id) && !subNode.backwards) {
+                added.add(subNode.id);
                 ExecutionNode eSubNode = new ExecutionNode(path, parent, subNode);
-                parent.add(cfg, eSubNode);
-                successors.add(eSubNode);
-                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent),
-                        added, successors);
-            });
+                if (parent != null) {
+                    parent.add(cfg, eSubNode);
+                } else {
+                    path.add(cfg, eSubNode);
+                }
+                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent), added);
+            }
+        });
+        if (parent != null) {
             parent.branch();
         }
     }
@@ -189,7 +179,6 @@ public class ExecutionPath {
         for (ExecutionNode node : nodes) {
             if (previous != null) {
                 previous.nextNode = node;
-                node.previousNode = previous;
             }
             node.paths().forEach(ExecutionPath::setNextNodes);
             previous = node;
@@ -205,18 +194,17 @@ public class ExecutionPath {
     public static ExecutionPath build(ControlFlowGraph cfg) {
         ExecutionPath path = new ExecutionPath();
         AbstractInsnNode insn = cfg.method.instructions().getFirst();
-        List<String> added = new ArrayList<>();
+        Set<String> added = new HashSet<>();
         while (insn != null) {
-            ControlFlowNode node = cfg.nodeFor(insn);
+            ControlFlowNode node = cfg.nodeFor(insn, false);
             if (node != null) {
                 String nodeId = cfg.idFor(node);
                 if (path.findById(nodeId) == null) {
                     ExecutionNode eNode = new ExecutionNode(path, null, node);
-                    if (node.successors.size() > 1) {
-                        List<ExecutionNode> successors = new ArrayList<>();
-                        addSuccessors(cfg, path, eNode, eNode, added, successors);
-                    }
                     path.add(cfg, eNode);
+                    ExecutionNode parent = (node.successors.size() > 1 ? eNode : null);
+                    added.add(nodeId);
+                    addSuccessors(cfg, path, eNode, parent, added);
                 }
             }
             insn = insn.getNext();

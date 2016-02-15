@@ -389,6 +389,9 @@ public class Assembly implements Opcodes {
         }
         int op = insn.getOpcode();
         if (op == -1) {
+            if (insn instanceof LabelNode) {
+                return (insn.getClass().getSimpleName() + insn.toString().split(insn.getClass().getSimpleName())[1]);
+            }
             return insn.toString();
         }
         StringBuilder builder = new StringBuilder();

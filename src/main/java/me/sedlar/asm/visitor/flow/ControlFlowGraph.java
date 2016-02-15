@@ -5,9 +5,7 @@ import me.sedlar.asm.util.Assembly;
 import me.sedlar.asm.util.EnvPath;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-import org.objectweb.asm.tree.analysis.Analyzer;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
-import org.objectweb.asm.tree.analysis.BasicInterpreter;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -39,7 +37,7 @@ public class ControlFlowGraph {
     public final Map<AbstractInsnNode, ControlFlowNode> nodes;
     public final ClassMethod method;
 
-    private Map<Object, String> nodeIds = null;
+    private Map<Object, String> nodeIds = new HashMap<>();
     private int nodeId = 1;
 
     private ExecutionPath execution;
@@ -48,6 +46,8 @@ public class ControlFlowGraph {
         this.nodes = nodes;
         this.method = method;
     }
+
+    private static final ControlFlowAnalyzer ANALYZER = new ControlFlowAnalyzer();
 
     /**
      * Creates a new {@link ControlFlowGraph} and populates it with the flow
@@ -64,29 +64,13 @@ public class ControlFlowGraph {
      * @throws AnalyzerException if the underlying bytecode library is unable to
      *                           analyze the method bytecode
      */
-    public static ControlFlowGraph create(ControlFlowGraph initial, ClassMethod method) throws AnalyzerException {
+    public static synchronized ControlFlowGraph create(ControlFlowGraph initial, ClassMethod method)
+            throws AnalyzerException {
         ControlFlowGraph graph = (initial != null ? initial : new ControlFlowGraph(new HashMap<>(), method));
         InsnList instructions = method.instructions();
-        Analyzer analyzer = new Analyzer(new BasicInterpreter()) {
-            protected void newControlFlowEdge(int insn, int successor) {
-                AbstractInsnNode from = instructions.get(insn);
-                AbstractInsnNode to = instructions.get(successor);
-                graph.add(from, to);
-            }
-
-            protected boolean newControlFlowExceptionEdge(int insn, TryCatchBlockNode tcb) {
-                graph.exception(tcb);
-                return super.newControlFlowExceptionEdge(insn, tcb);
-            }
-
-            protected boolean newControlFlowExceptionEdge(int insn, int successor) {
-                AbstractInsnNode from = instructions.get(insn);
-                AbstractInsnNode to = instructions.get(successor);
-                graph.exception(from, to);
-                return super.newControlFlowExceptionEdge(insn, successor);
-            }
-        };
-        analyzer.analyze(method.owner.name(), method.method);
+        ANALYZER.graph = graph;
+        ANALYZER.instructions = instructions;
+        ANALYZER.analyze(method);
         return graph;
     }
 
@@ -129,40 +113,25 @@ public class ControlFlowGraph {
      * instruction node
      */
     public boolean isConnected(AbstractInsnNode from, AbstractInsnNode to) {
-        return isConnected(nodeFor(from), nodeFor(to));
+        return isConnected(nodeFor(from, false), nodeFor(to, false));
     }
 
     /**
      * Adds an exception flow to this graph
      */
-    protected void add(AbstractInsnNode from, AbstractInsnNode to) {
-        nodeFor(from).addSuccessor(nodeFor(to));
+    protected void add(AbstractInsnNode from, AbstractInsnNode to, boolean backwards) {
+        nodeFor(from, false).addSuccessor(nodeFor(to, backwards));
     }
 
     /**
      * Adds an exception flow to this graph
      */
-    protected void exception(AbstractInsnNode from, AbstractInsnNode to) {
-        nodeFor(from).addExceptionPath(nodeFor(to));
-    }
-
-    /**
-     * Adds an exception try block node to this graph
-     */
-    protected void exception(TryCatchBlockNode tcb) {
-        LabelNode start = tcb.start;
-        LabelNode end = tcb.end;
-        AbstractInsnNode curr = start;
-        ControlFlowNode handlerNode = nodeFor(tcb.handler);
-        while (curr != end && curr != null) {
-            if (curr.getType() == AbstractInsnNode.METHOD_INSN) {
-                if (tcb.type == null) {
-                    nodeFor(curr).addSuccessor(handlerNode);
-                }
-                nodeFor(curr).addExceptionPath(handlerNode);
-            }
-            curr = curr.getNext();
-        }
+    protected void exception(AbstractInsnNode from, AbstractInsnNode to, boolean backwards) {
+        ControlFlowNode fromNode = nodeFor(from, false);
+        ControlFlowNode toNode = nodeFor(to, backwards);
+        fromNode.id = idFor(fromNode);
+        toNode.id = idFor(toNode);
+        fromNode.addExceptionPath(toNode);
     }
 
     /**
@@ -172,11 +141,13 @@ public class ControlFlowGraph {
      * @return the control flow graph node corresponding to the given
      * instruction
      */
-    public ControlFlowNode nodeFor(AbstractInsnNode instruction) {
+    public ControlFlowNode nodeFor(AbstractInsnNode instruction, boolean backwards) {
         ControlFlowNode node = nodes.get(instruction);
         if (node == null) {
-            node = new ControlFlowNode(this, instruction);
+            node = new ControlFlowNode(this, instruction, backwards);
             nodes.put(instruction, node);
+        } else {
+            node.backwards = backwards;
         }
         return node;
     }
@@ -247,15 +218,13 @@ public class ControlFlowGraph {
      * @return The id for the specified object.
      */
     public String idFor(Object object) {
-        if (nodeIds == null) {
-            nodeIds = new HashMap<>();
-        }
-        String id = nodeIds.get(object);
-        if (id == null) {
-            id = Integer.toString(nodeId++);
+        if (!nodeIds.containsKey(object)) {
+            String id = Integer.toString(nodeId++);
             nodeIds.put(object, id);
+            return id;
+        } else {
+            return nodeIds.get(object);
         }
-        return id;
     }
 
     /**

@@ -13,10 +13,11 @@ import java.util.Optional;
  */
 public class ExecutionNode {
 
-    private final List<List<ExecutionNode>> paths = new ArrayList<>(2);
+    private final List<List<ExecutionNode>> paths = new ArrayList<>();
     public final ExecutionPath path;
     public final ExecutionNode parent;
     public final ControlFlowNode source;
+    public final String id;
 
     private List<ExecutionNode> current = new ArrayList<>();
 
@@ -26,6 +27,7 @@ public class ExecutionNode {
         this.path = path;
         this.parent = parent;
         this.source = source;
+        this.id = source.id;
     }
 
     /**
@@ -94,7 +96,7 @@ public class ExecutionNode {
 
     protected void add(ControlFlowGraph cfg, ExecutionNode eNode) {
         current.add(eNode);
-        path.idMap.put(cfg.idFor(eNode.source), eNode);
+        path.idMap.put(eNode.id, eNode);
     }
 
     /**
