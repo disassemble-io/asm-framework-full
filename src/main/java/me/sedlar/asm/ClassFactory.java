@@ -211,7 +211,7 @@ public class ClassFactory {
     /**
      * Finds the amount of fields matching the given desc.
      *
-     * @param desc The desc to match.
+     * @param desc          The desc to match.
      * @param includeStatic An option to include static fields or not.
      * @return The amount of fields matching the given desc.
      */
@@ -333,7 +333,7 @@ public class ClassFactory {
     /**
      * Finds the amount of methods matching the given desc.
      *
-     * @param desc The desc to match.
+     * @param desc          The desc to match.
      * @param includeStatic An option to include static methods or not.
      * @return The amount of methods matching the given desc.
      */

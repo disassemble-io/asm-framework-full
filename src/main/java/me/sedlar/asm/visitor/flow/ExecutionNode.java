@@ -13,15 +13,13 @@ import java.util.Optional;
  */
 public class ExecutionNode {
 
-    private final List<List<ExecutionNode>> paths = new ArrayList<>();
     public final ExecutionPath path;
     public final ExecutionNode parent;
     public final ControlFlowNode source;
     public final String id;
-
-    private List<ExecutionNode> current = new ArrayList<>();
-
+    private final List<List<ExecutionNode>> paths = new ArrayList<>();
     protected ExecutionNode previousExecutor, previousNode, nextNode;
+    private List<ExecutionNode> current = new ArrayList<>();
 
     public ExecutionNode(ExecutionPath path, ExecutionNode parent, ControlFlowNode source) {
         this.path = path;

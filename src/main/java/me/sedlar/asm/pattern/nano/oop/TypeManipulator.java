@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @since 2/1/16
  */
 @PatternInfo(category = "Object-Orientation", name = "TypeManipulator", simple = false,
-        description = "uses type casts or instanceof operations")
+    description = "uses type casts or instanceof operations")
 public class TypeManipulator extends AdvancedNanoPattern {
 
     @Override

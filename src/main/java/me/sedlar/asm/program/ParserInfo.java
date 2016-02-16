@@ -1,4 +1,4 @@
-package me.sedlar.asm.updater;
+package me.sedlar.asm.program;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -8,7 +8,9 @@ import java.lang.annotation.RetentionPolicy;
  * @since 2/15/2016
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AnalyzerInfo {
+public @interface ParserInfo {
+
+    String name();
 
     String[] hooks();
 }

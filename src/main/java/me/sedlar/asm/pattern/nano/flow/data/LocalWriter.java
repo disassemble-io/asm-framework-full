@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @since 2/1/16
  */
 @PatternInfo(category = "Data Flow", name = "LocalWriter", simple = false,
-        description = "writes values of local variables on stack frame")
+    description = "writes values of local variables on stack frame")
 public class LocalWriter extends AdvancedNanoPattern {
 
     @Override

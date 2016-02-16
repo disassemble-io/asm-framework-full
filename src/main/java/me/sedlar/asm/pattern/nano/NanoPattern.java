@@ -15,5 +15,6 @@ public abstract class NanoPattern implements Opcodes {
     }
 
     public abstract boolean matches(AbstractInsnNode insn);
+
     public abstract boolean matches(ClassMethod method);
 }

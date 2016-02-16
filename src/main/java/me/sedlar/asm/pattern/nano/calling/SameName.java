@@ -9,7 +9,7 @@ import me.sedlar.asm.pattern.nano.SimpleNanoPattern;
  * @since 2/1/16
  */
 @PatternInfo(category = "Calling", name = "SameName", simple = true,
-        description = "calls another method with the same name")
+    description = "calls another method with the same name")
 public class SameName extends SimpleNanoPattern {
 
     @Override

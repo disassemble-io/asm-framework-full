@@ -19,16 +19,11 @@ public abstract class MethodEndVisitor extends ClassMethodVisitor {
     protected static Object THIS = new Object();
 
     protected static Object OTHER = new Object();
-
-    protected boolean constructor;
-
-    protected boolean superInitialized;
-
-    protected List<Object> stackFrame;
-
-    protected Map<Label, List<Object>> branches;
-
     private final List<InsnNode> exits = new ArrayList<>();
+    protected boolean constructor;
+    protected boolean superInitialized;
+    protected List<Object> stackFrame;
+    protected Map<Label, List<Object>> branches;
 
     @Override
     public void visitCode() {
@@ -514,7 +509,7 @@ public abstract class MethodEndVisitor extends ClassMethodVisitor {
     protected void pushValue(Object o) {
         stackFrame.add(o);
     }
-    
+
     protected void onMethodEnter() {
     }
 

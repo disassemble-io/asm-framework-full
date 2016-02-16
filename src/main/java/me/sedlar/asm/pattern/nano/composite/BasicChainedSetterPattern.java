@@ -10,12 +10,12 @@ public class BasicChainedSetterPattern extends CompositePattern {
 
     @Override
     public String[] simples() {
-        return new String[] {CHAINED, STRAIGHT_LINE};
+        return new String[]{CHAINED, STRAIGHT_LINE};
     }
 
     @Override
     public String[] advanced() {
-        return new String[] {LOCAL_READER};
+        return new String[]{LOCAL_READER};
     }
 
     @Override

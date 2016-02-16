@@ -37,10 +37,8 @@ public class ControlFlowNode {
      * Any abnormal successors (e.g. the handler to go to following an exception)
      */
     public final List<ControlFlowNode> exceptions = new ArrayList<>();
-
-    protected String id;
-
     public boolean backwards;
+    protected String id;
 
     /**
      * Constructs a new control graph node

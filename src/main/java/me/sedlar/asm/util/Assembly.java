@@ -34,7 +34,7 @@ public class Assembly implements Opcodes {
     /**
      * Checks how many instructions from the given list match the given predicate.
      *
-     * @param list The list of instructions.
+     * @param list      The list of instructions.
      * @param predicate The predicate to match.
      * @return The amount of instructions from the given list matching the given predicate.
      */
@@ -52,7 +52,7 @@ public class Assembly implements Opcodes {
     /**
      * Finds the first occurrence of an instruction matching the given predicate.
      *
-     * @param list The list of instructions.
+     * @param list      The list of instructions.
      * @param predicate The predicate to match.
      * @return The first occurrence of an instruction matching the given predicate.
      */
@@ -70,9 +70,9 @@ public class Assembly implements Opcodes {
     /**
      * Finds The first occurrence of an instruction matching the given predicate, occurring after the given instruction.
      *
-     * @param insn The instruction to search after.
+     * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
-     * @param dist The maximum distance to search.
+     * @param dist      The maximum distance to search.
      * @return The first occurrence of an instruction matching the given predicate, occurring after the given instruction.
      */
     @SuppressWarnings("unchecked")
@@ -90,7 +90,7 @@ public class Assembly implements Opcodes {
     /**
      * Finds The first occurrence of an instruction matching the given predicate, occurring after the given instruction.
      *
-     * @param insn The instruction to search after.
+     * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
      * @return The first occurrence of an instruction matching the given predicate, occurring after the given instruction.
      */
@@ -101,9 +101,9 @@ public class Assembly implements Opcodes {
     /**
      * Finds The first occurrence of an instruction matching the given predicate, occurring before the given instruction.
      *
-     * @param insn The instruction to search after.
+     * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
-     * @param dist The maximum distance to search.
+     * @param dist      The maximum distance to search.
      * @return The first occurrence of an instruction matching the given predicate, occurring before the given instruction.
      */
     @SuppressWarnings("unchecked")
@@ -121,7 +121,7 @@ public class Assembly implements Opcodes {
     /**
      * Finds The first occurrence of an instruction matching the given predicate, occurring before the given instruction.
      *
-     * @param insn The instruction to search after.
+     * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
      * @return The first occurrence of an instruction matching the given predicate, occurring before the given instruction.
      */
@@ -147,7 +147,7 @@ public class Assembly implements Opcodes {
      * Renames the given field throughout the ClassFactory map with to given name.
      *
      * @param classes The map of classes to rename within.
-     * @param fn The field to rename.
+     * @param fn      The field to rename.
      * @param newName The name to rename the field to.
      */
     public static void rename(Map<String, ClassFactory> classes, ClassField fn, String newName) {
@@ -164,7 +164,7 @@ public class Assembly implements Opcodes {
                             realOwner = classes.get(realOwner.superName());
                         }
                         if (realOwner != null && realOwner.name().equals(fn.owner.name()) &&
-                                fin.name.equals(fn.field.name)) {
+                            fin.name.equals(fn.field.name)) {
                             fin.name = newName;
                         }
                     }
@@ -178,7 +178,7 @@ public class Assembly implements Opcodes {
      * Renames the given class throughout the ClassFactory map with to given name.
      *
      * @param classes The map of classes to rename within.
-     * @param cf The class to rename.
+     * @param cf      The class to rename.
      * @param newName The name to rename the class to.
      */
     public static void rename(Map<String, ClassFactory> classes, ClassFactory cf, String newName) {
@@ -289,7 +289,7 @@ public class Assembly implements Opcodes {
             case INVOKE_DYNAMIC_INSN: {
                 InvokeDynamicInsnNode idin1 = (InvokeDynamicInsnNode) insn1, idin2 = (InvokeDynamicInsnNode) insn2;
                 return idin1.bsm.equals(idin2.bsm) && Arrays.equals(idin1.bsmArgs, idin2.bsmArgs) &&
-                        idin1.desc.equals(idin2.desc) && idin1.name.equals(idin2.name);
+                    idin1.desc.equals(idin2.desc) && idin1.name.equals(idin2.name);
             }
             case JUMP_INSN: {
                 JumpInsnNode jin1 = (JumpInsnNode) insn1, jin2 = (JumpInsnNode) insn2;
@@ -298,7 +298,7 @@ public class Assembly implements Opcodes {
             case LABEL: {
                 Label label1 = ((LabelNode) insn1).getLabel(), label2 = ((LabelNode) insn2).getLabel();
                 return label1 == null ? label2 == null : label1.info == null ? label2.info == null :
-                        label1.info.equals(label2.info);
+                    label1.info.equals(label2.info);
             }
             case LDC_INSN: {
                 LdcInsnNode lin1 = (LdcInsnNode) insn1, lin2 = (LdcInsnNode) insn2;
@@ -353,7 +353,7 @@ public class Assembly implements Opcodes {
     /**
      * Checks whether the given instruction arrays are similar.
      *
-     * @param insns The first instruction array to compare.
+     * @param insns  The first instruction array to compare.
      * @param insns2 The second instruction array to compare.
      * @return <t>true</t> if the given instruction arrays are similar, otherwise <t>false</t>.
      */

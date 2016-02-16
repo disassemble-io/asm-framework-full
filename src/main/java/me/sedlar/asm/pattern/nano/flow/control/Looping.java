@@ -15,7 +15,7 @@ import java.util.List;
  * @since 2/1/16
  */
 @PatternInfo(category = "Control Flow", name = "Looping", simple = true,
-        description = "one or more control flow loops in method body")
+    description = "one or more control flow loops in method body")
 public class Looping extends SimpleNanoPattern {
 
     @Override

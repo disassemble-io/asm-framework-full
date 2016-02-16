@@ -14,6 +14,6 @@ public class Recursive extends SimpleNanoPattern {
     @Override
     public boolean matches(ClassMethod method) {
         return method.calls(min -> min.owner.equals(method.owner.name()) && min.name.equals(method.name()) &&
-                min.desc.equals(method.desc()));
+            min.desc.equals(method.desc()));
     }
 }

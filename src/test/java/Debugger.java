@@ -28,43 +28,6 @@ public class Debugger implements Opcodes {
 
     private static final Map<String, ClassMethod> methods = new HashMap<>();
 
-    @Test
-    public void testControlFlowGraph() {
-        methods.values().forEach(cm -> {
-            if (cm.name().contains("<")) {
-                return;
-            }
-            if (cm.name().contains("cfg")) {
-                try {
-                    long start = System.nanoTime();
-                    cm.cfg().ifPresent(cfg -> {
-                        List<FlowQueryResult> results = cfg.execution().query(
-                                new FlowQuery()
-                                        .stmtLoad().name("root-loader")
-                                        .stmtIf().dist(1).branch()
-                                        .stmtIncrement()
-                                        .stmtIf().dist(5).branch()
-                                        .stmtStore()
-                                        .stmtLoad()
-                        );
-                        System.out.println("query results: " + results.size());
-                        results.forEach(result -> result.findInstruction("root-loader")
-                                .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
-//                        cfg.execution().printTree();
-//                        System.out.println(cfg.toDot(start.get(), null));
-//                        System.out.println();
-//                        BufferedImage image = cfg.dotImage(start.get(), null);
-//                        ImageIO.write(image, "png", new File("./" + cm.key() + ".png"));
-                    });
-                    long end = System.nanoTime();
-                    System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-    }
-
     @BeforeClass
     public static void setup() {
         scanClassPath();
@@ -119,5 +82,42 @@ public class Debugger implements Opcodes {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void testControlFlowGraph() {
+        methods.values().forEach(cm -> {
+            if (cm.name().contains("<")) {
+                return;
+            }
+            if (cm.name().contains("cfg")) {
+                try {
+                    long start = System.nanoTime();
+                    cm.cfg().ifPresent(cfg -> {
+                        List<FlowQueryResult> results = cfg.execution().query(
+                            new FlowQuery()
+                                .stmtLoad().name("root-loader")
+                                .stmtIf().dist(1).branch()
+                                .stmtIncrement()
+                                .stmtIf().dist(5).branch()
+                                .stmtStore()
+                                .stmtLoad()
+                        );
+                        System.out.println("query results: " + results.size());
+                        results.forEach(result -> result.findInstruction("root-loader")
+                            .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
+//                        cfg.execution().printTree();
+//                        System.out.println(cfg.toDot(start.get(), null));
+//                        System.out.println();
+//                        BufferedImage image = cfg.dotImage(start.get(), null);
+//                        ImageIO.write(image, "png", new File("./" + cm.key() + ".png"));
+                    });
+                    long end = System.nanoTime();
+                    System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }

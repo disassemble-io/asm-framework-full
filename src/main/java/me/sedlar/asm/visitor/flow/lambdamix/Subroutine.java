@@ -11,7 +11,7 @@ import java.util.List;
  * @author lambdamix
  */
 public class Subroutine {
-    
+
     protected LabelNode start;
     protected boolean[] access;
     protected List<JumpInsnNode> callers;

@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @since 2/1/16
  */
 @PatternInfo(category = "Object-Orientation", name = "FieldReader", simple = false,
-        description = "reads (static or instance) field values from an object")
+    description = "reads (static or instance) field values from an object")
 public class FieldReader extends AdvancedNanoPattern {
 
     @Override

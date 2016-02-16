@@ -12,12 +12,12 @@ import org.objectweb.asm.tree.TableSwitchInsnNode;
  * @since 2/1/16
  */
 @PatternInfo(category = "Control Flow", name = "StraightLine", simple = true,
-        description = "no branches in method body")
+    description = "no branches in method body")
 public class StraightLine extends SimpleNanoPattern {
 
     @Override
     public boolean matches(ClassMethod method) {
         return method.count(insn -> insn instanceof JumpInsnNode || insn instanceof TableSwitchInsnNode ||
-                insn instanceof LookupSwitchInsnNode) == 0;
+            insn instanceof LookupSwitchInsnNode) == 0;
     }
 }

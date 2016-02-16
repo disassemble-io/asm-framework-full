@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  * @since 2/1/16
  */
 @PatternInfo(category = "Data Flow", name = "LocalReader", simple = false,
-        description = "reads values of local variables on stack frame")
+    description = "reads values of local variables on stack frame")
 public class LocalReader extends AdvancedNanoPattern {
 
     @Override

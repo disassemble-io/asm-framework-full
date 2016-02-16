@@ -2,7 +2,9 @@ package me.sedlar.asm.visitor.flow;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -55,5 +57,21 @@ public class FlowQueryResult {
     public Optional<AbstractInsnNode> findInstruction(String name) {
         Optional<ControlFlowNode> node = findNode(name);
         return (node.isPresent() ? Optional.ofNullable(node.get().instruction) : Optional.empty());
+    }
+
+    /**
+     * Gets a map of the named instructions from the FlowQuery.
+     *
+     * @return A map of the named instructions from the FlowQuery.
+     */
+    public Map<String, AbstractInsnNode> namedInstructions() {
+        Map<String, AbstractInsnNode> instructions = new HashMap<>();
+        for (int i = 0; i < nodes.size(); i++) {
+            String nodeName = query.nameAt(i);
+            if (nodeName != null) {
+                instructions.put(nodeName, nodes.get(i).source.instruction);
+            }
+        }
+        return instructions;
     }
 }

@@ -15,15 +15,15 @@ import java.util.Map;
  * @since 2/15/2016
  */
 public class FramelessAnalyzer implements Opcodes {
-    
-    private int n;
-    private InsnList insns;
-    private List<TryCatchBlockNode>[] handlers;
-    private Subroutine[] subroutines;
+
     protected boolean[] wasQueued;
     protected boolean[] queued;
     protected int[] queue;
     protected int top;
+    private int n;
+    private InsnList insns;
+    private List<TryCatchBlockNode>[] handlers;
+    private Subroutine[] subroutines;
 
     @SuppressWarnings("unchecked")
     public void analyze(ClassMethod method) throws AnalyzerException {
@@ -85,7 +85,7 @@ public class FramelessAnalyzer implements Opcodes {
                 int insnOpcode = insnNode.getOpcode();
                 int insnType = insnNode.getType();
                 if (insnType == AbstractInsnNode.LABEL || insnType == AbstractInsnNode.LINE ||
-                        insnType == AbstractInsnNode.FRAME) {
+                    insnType == AbstractInsnNode.FRAME) {
                     merge(insn + 1, subroutine);
                     newControlFlowEdge(insn, insn + 1);
                 } else {
@@ -141,7 +141,7 @@ public class FramelessAnalyzer implements Opcodes {
                                 int var = ((VarInsnNode) insnNode).var;
                                 subroutine.access[var] = true;
                                 if (insnOpcode == LLOAD || insnOpcode == DLOAD ||
-                                        insnOpcode == LSTORE || insnOpcode == DSTORE) {
+                                    insnOpcode == LSTORE || insnOpcode == DSTORE) {
                                     subroutine.access[var + 1] = true;
                                 }
                             } else if (insnNode instanceof IincInsnNode) {

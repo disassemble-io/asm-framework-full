@@ -33,13 +33,13 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
 public class ClassMethod {
 
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
-            new NoParams(), new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
-            new StraightLine(), new Looping(), new Exceptions(), // Control Flow
+        new NoParams(), new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
+        new StraightLine(), new Looping(), new Exceptions(), // Control Flow
     };
 
     private static final AdvancedNanoPattern[] ADVANCED_NANO_PATTERNS = {
-            new ObjectCreator(), new FieldReader(), new FieldWriter(), new TypeManipulator(), // Object-Oriented
-            new LocalReader(), new LocalWriter(), new ArrayCreator(), new ArrayReader(), new ArrayWriter() // Data Flow
+        new ObjectCreator(), new FieldReader(), new FieldWriter(), new TypeManipulator(), // Object-Oriented
+        new LocalReader(), new LocalWriter(), new ArrayCreator(), new ArrayReader(), new ArrayWriter() // Data Flow
     };
 
     private static final Map<String, ClassMethod> cached = new HashMap<>();
@@ -57,6 +57,16 @@ public class ClassMethod {
         this.method = method;
         this.handle = new Handle(0, owner.node.name, method.name, method.desc);
         cached.put(key(), this);
+    }
+
+    /**
+     * Gets the ClassMethod matching the given key, if it is within the cache.
+     *
+     * @param key The key to match.
+     * @return The ClassMethod matching the given key, if it is within the cache.
+     */
+    public static ClassMethod resolve(String key) {
+        return cached.get(key);
     }
 
     /**
@@ -354,16 +364,6 @@ public class ClassMethod {
     @Override
     public boolean equals(Object o) {
         return (o instanceof ClassMethod && ((ClassMethod) o).key().equals(key())) ||
-                (o instanceof MethodNode && method.equals(o));
-    }
-
-    /**
-     * Gets the ClassMethod matching the given key, if it is within the cache.
-     *
-     * @param key The key to match.
-     * @return The ClassMethod matching the given key, if it is within the cache.
-     */
-    public static ClassMethod resolve(String key) {
-        return cached.get(key);
+            (o instanceof MethodNode && method.equals(o));
     }
 }

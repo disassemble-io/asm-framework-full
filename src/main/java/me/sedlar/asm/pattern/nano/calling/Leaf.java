@@ -15,6 +15,6 @@ public class Leaf extends SimpleNanoPattern {
     @Override
     public boolean matches(ClassMethod method) {
         return method.count(insn -> insn.getOpcode() != -1 &&
-                Printer.OPCODES[insn.getOpcode()].startsWith("INVOKE")) == 0;
+            Printer.OPCODES[insn.getOpcode()].startsWith("INVOKE")) == 0;
     }
 }

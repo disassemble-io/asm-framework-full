@@ -12,21 +12,6 @@ import java.util.List;
  */
 public class BasicSetterPattern extends CompositePattern {
 
-    @Override
-    public String[] simples() {
-        return new String[]{NO_RETURN, STRAIGHT_LINE};
-    }
-
-    @Override
-    public String[] advanced() {
-        return new String[]{LOCAL_READER};
-    }
-
-    @Override
-    public boolean matches(ClassMethod method) {
-        return super.matches(method) && setterMatches(method);
-    }
-
     protected static boolean setterMatches(ClassMethod method) {
         List<String> simples = method.findSimpleNanoPatterns();
         if (simples.contains(LEAF)) {
@@ -45,5 +30,20 @@ public class BasicSetterPattern extends CompositePattern {
             }
             return false;
         }
+    }
+
+    @Override
+    public String[] simples() {
+        return new String[]{NO_RETURN, STRAIGHT_LINE};
+    }
+
+    @Override
+    public String[] advanced() {
+        return new String[]{LOCAL_READER};
+    }
+
+    @Override
+    public boolean matches(ClassMethod method) {
+        return super.matches(method) && setterMatches(method);
     }
 }

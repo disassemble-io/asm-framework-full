@@ -12,10 +12,9 @@ import org.objectweb.asm.tree.*;
  */
 public class ClassMethodVisitor extends MethodVisitor implements Opcodes {
 
+    protected ClassMethod method;
     private int idx = 0;
     private boolean locked = false;
-
-    protected ClassMethod method;
 
     public ClassMethodVisitor() {
         super(Opcodes.ASM5, null);

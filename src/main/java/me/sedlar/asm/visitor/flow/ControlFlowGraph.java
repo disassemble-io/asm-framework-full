@@ -31,23 +31,20 @@ import java.util.*;
  */
 public class ControlFlowGraph {
 
+    private static final ControlFlowAnalyzer ANALYZER = new ControlFlowAnalyzer();
     /**
      * Map from instructions to nodes
      */
     public final Map<AbstractInsnNode, ControlFlowNode> nodes;
     public final ClassMethod method;
-
     private Map<Object, String> nodeIds = new HashMap<>();
     private int nodeId = 1;
-
     private ExecutionPath execution;
 
     public ControlFlowGraph(Map<AbstractInsnNode, ControlFlowNode> nodes, ClassMethod method) {
         this.nodes = nodes;
         this.method = method;
     }
-
-    private static final ControlFlowAnalyzer ANALYZER = new ControlFlowAnalyzer();
 
     /**
      * Creates a new {@link ControlFlowGraph} and populates it with the flow
@@ -65,7 +62,7 @@ public class ControlFlowGraph {
      *                           analyze the method bytecode
      */
     public static synchronized ControlFlowGraph create(ControlFlowGraph initial, ClassMethod method)
-            throws AnalyzerException {
+        throws AnalyzerException {
         ControlFlowGraph graph = (initial != null ? initial : new ControlFlowGraph(new HashMap<>(), method));
         InsnList instructions = method.instructions();
         ANALYZER.graph = graph;
@@ -281,8 +278,8 @@ public class ControlFlowGraph {
             if (highlight != null && highlight.contains(node)) {
                 builder.append(",shape=box,style=filled");
             } else if (instruction instanceof LineNumberNode ||
-                    instruction instanceof LabelNode ||
-                    instruction instanceof FrameNode) {
+                instruction instanceof LabelNode ||
+                instruction instanceof FrameNode) {
                 builder.append(",shape=oval,style=dotted");
             } else {
                 builder.append(",shape=box");
@@ -355,11 +352,11 @@ public class ControlFlowGraph {
             }
             File dotFile = new File(tempDir, method.key() + ".dot");
             Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING);
+                StandardOpenOption.TRUNCATE_EXISTING);
             File imgFile = new File(tempDir, method.key() + ".png");
             String program = (windows ? new File(graphViz.get(), "dot.exe").getAbsolutePath() : "dot");
             ProcessBuilder builder = new ProcessBuilder(program, "-Tpng", dotFile.getAbsolutePath(),
-                    "-o", imgFile.getAbsolutePath());
+                "-o", imgFile.getAbsolutePath());
             Process process = builder.start();
             process.waitFor();
             BufferedImage image = ImageIO.read(imgFile);
