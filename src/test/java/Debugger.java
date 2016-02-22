@@ -10,6 +10,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -106,11 +108,13 @@ public class Debugger implements Opcodes {
                         System.out.println("query results: " + results.size());
                         results.forEach(result -> result.findInstruction("root-loader")
                             .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
-//                        cfg.execution().printTree();
-//                        System.out.println(cfg.toDot(start.get(), null));
-//                        System.out.println();
-//                        BufferedImage image = cfg.dotImage(start.get(), null);
-//                        ImageIO.write(image, "png", new File("./" + cm.key() + ".png"));
+                        cfg.execution().printTree();
+                        BufferedImage image = cfg.dotImage(null, null);
+                        try {
+                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     });
                     long end = System.nanoTime();
                     System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));

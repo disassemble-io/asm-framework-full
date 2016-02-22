@@ -2,6 +2,8 @@ package me.sedlar.asm.visitor.flow;
 
 import me.sedlar.asm.util.Assembly;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FrameNode;
+import org.objectweb.asm.tree.LabelNode;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -13,69 +15,8 @@ import java.util.stream.Collectors;
  */
 public class ExecutionPath {
 
-    protected final Map<String, ExecutionNode> idMap = new HashMap<>();
     private final List<ExecutionNode> nodes = new ArrayList<>();
-
-    private static void addSuccessors(ControlFlowGraph cfg, ExecutionPath path, ExecutionNode eNode,
-                                      ExecutionNode parent, Set<String> added) {
-        if (eNode.source.backwards || (parent != null && parent.source.backwards)) {
-            return;
-        }
-        eNode.source.successors.forEach(subNode -> {
-            if (!added.contains(subNode.id) && !subNode.backwards) {
-                added.add(subNode.id);
-                ExecutionNode eSubNode = new ExecutionNode(path, parent, subNode);
-                if (parent != null) {
-                    parent.add(cfg, eSubNode);
-                } else {
-                    path.add(cfg, eSubNode);
-                }
-                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent), added);
-            }
-        });
-        if (parent != null) {
-            parent.branch();
-        }
-    }
-
-    private static void setNextNodes(List<ExecutionNode> nodes) {
-        ExecutionNode previous = null;
-        for (ExecutionNode node : nodes) {
-            if (previous != null) {
-                previous.nextNode = node;
-            }
-            node.paths().forEach(ExecutionPath::setNextNodes);
-            previous = node;
-        }
-    }
-
-    /**
-     * Builds an ExecutionPath for the given ControlFlowGraph.
-     *
-     * @param cfg The ControlFlowGraph to build an ExecutionPath for.
-     * @return An ExecutionPath for the given ControlFlowGraph.
-     */
-    public static ExecutionPath build(ControlFlowGraph cfg) {
-        ExecutionPath path = new ExecutionPath();
-        AbstractInsnNode insn = cfg.method.instructions().getFirst();
-        Set<String> added = new HashSet<>();
-        while (insn != null) {
-            ControlFlowNode node = cfg.nodeFor(insn, false);
-            if (node != null) {
-                String nodeId = cfg.idFor(node);
-                if (path.findById(nodeId) == null) {
-                    ExecutionNode eNode = new ExecutionNode(path, null, node);
-                    path.add(cfg, eNode);
-                    ExecutionNode parent = (node.successors.size() > 1 ? eNode : null);
-                    added.add(nodeId);
-                    addSuccessors(cfg, path, eNode, parent, added);
-                }
-            }
-            insn = insn.getNext();
-        }
-        setNextNodes(path.nodes);
-        return path;
-    }
+    protected final Map<String, ExecutionNode> idMap = new HashMap<>();
 
     private void findAll(ExecutionNode parent, Predicate<ExecutionNode> predicate, List<ExecutionNode> list) {
         if (predicate.test(parent)) {
@@ -168,7 +109,7 @@ public class ExecutionPath {
     private ExecutionNode findNext(ExecutionNode start, Predicate<ExecutionNode> predicate, int maxDist) {
         ExecutionNode node = start;
         int jump = 0;
-        while ((node = node.nextNode) != null && (jump == -1 || jump++ < maxDist)) {
+        while ((node = node.next()) != null && (jump == -1 || jump++ < maxDist)) {
             if (predicate.test(node)) {
                 return node;
             }
@@ -186,30 +127,85 @@ public class ExecutionPath {
     }
 
     private void print(String prefix, ExecutionNode node) {
-        String label = (prefix + Assembly.toString(node.source.instruction));
-        boolean layered = !node.paths().isEmpty();
-        if (layered) {
-            label += " {";
-        }
-        System.out.println(label);
-        for (List<ExecutionNode> path : node.paths()) {
-            System.out.println(prefix + "  {");
-            for (ExecutionNode subNode : path) {
-                print(prefix + "    ", subNode);
+        if (!(node.source.instruction instanceof LabelNode || node.source.instruction instanceof FrameNode)) {
+            String label = (prefix + Assembly.toString(node.source.instruction));
+            boolean layered = !node.paths().isEmpty();
+            if (layered) {
+                label += " {";
             }
-            System.out.println(prefix + "  }");
-        }
-        if (layered) {
-            System.out.println(prefix + "}");
+            System.out.println(label);
+            for (List<ExecutionNode> path : node.paths()) {
+                System.out.println(prefix + "  {");
+                for (ExecutionNode subNode : path) {
+                    print(prefix + "    ", subNode);
+                }
+                System.out.println(prefix + "  }");
+            }
+            if (layered) {
+                System.out.println(prefix + "}");
+            }
         }
     }
 
-    /**
-     * Prints out the paths as a tree-like structure.
-     */
     public void printTree() {
         for (ExecutionNode node : nodes) {
             print("", node);
         }
+    }
+
+    private static void addSuccessors(ControlFlowGraph cfg, ExecutionPath path, ExecutionNode eNode,
+                                      ExecutionNode parent, List<String> added,
+                                      List<ExecutionNode> successors) {
+        if (eNode.source.backwards) {
+            return;
+        }
+        String nodeId = cfg.idFor(eNode.source);
+        if (!added.contains(nodeId)) {
+            added.add(nodeId);
+            path.idMap.put(nodeId, eNode);
+            eNode.source.successors.forEach(subNode -> {
+                ExecutionNode eSubNode = new ExecutionNode(path, parent, subNode);
+                parent.add(cfg, eSubNode);
+                successors.add(eSubNode);
+                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent),
+                        added, successors);
+            });
+            parent.branch();
+        }
+    }
+
+    private static void setNextNodes(List<ExecutionNode> nodes) {
+        ExecutionNode previous = null;
+        for (ExecutionNode node : nodes) {
+            if (previous != null) {
+                previous.nextNode = node;
+                node.previousNode = previous;
+            }
+            node.paths().forEach(ExecutionPath::setNextNodes);
+            previous = node;
+        }
+    }
+
+    public static ExecutionPath build(ControlFlowGraph cfg) {
+        ExecutionPath path = new ExecutionPath();
+        AbstractInsnNode insn = cfg.method.instructions().getFirst();
+        List<String> added = new ArrayList<>();
+        while (insn != null) {
+            ControlFlowNode node = cfg.nodeFor(insn, false);
+            if (node != null) {
+                String nodeId = cfg.idFor(node);
+                if (path.findById(nodeId) == null) {
+                    ExecutionNode eNode = new ExecutionNode(path, null, node);
+                    if (eNode.source.successors.size() > 1) {
+                        List<ExecutionNode> successors = new ArrayList<>();
+                        addSuccessors(cfg, path, eNode, eNode, added, successors);
+                    }
+                    path.add(cfg, eNode);
+                }
+            }
+            insn = insn.getNext();
+        }
+        setNextNodes(path.nodes);
+        return path;
     }
 }
