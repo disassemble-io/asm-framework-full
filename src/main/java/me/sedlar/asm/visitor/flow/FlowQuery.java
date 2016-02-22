@@ -23,6 +23,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
     private final Map<Integer, Integer> dists = new HashMap<>();
     private final Map<Integer, String> names = new HashMap<>();
     private final Map<Integer, BranchType> branchTypes = new HashMap<>();
+    private final List<Integer> loops = new ArrayList<>();
+    private final List<Integer> restrictedLoops = new ArrayList<>();
     private boolean stopAtFirst = true;
     private Predicate<ClassFactory> restrictToClass;
     private Predicate<ClassMethod> restrictToMethod;
@@ -693,6 +695,46 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public String nameAt(int index) {
         return names.get(index);
+    }
+
+    /**
+     * Loops at the prior predicate.
+     *
+     * @return This FlowQuery chained with a loop query at the prior predicate.
+     */
+    public FlowQuery loops() {
+        loops.add(predicates.size() - 1);
+        return this;
+    }
+
+    /**
+     * Does not loop at the prior predicate.
+     *
+     * @return This FlowQuery chained with a restricted-loop query at the prior predicate.
+     */
+    public FlowQuery doesNotLoop() {
+        restrictedLoops.add(predicates.size() - 1);
+        return this;
+    }
+
+    /**
+     * Checks whether there has been a loop query at the given index.
+     *
+     * @param index The index to check at.
+     * @return <t>true</t> if there is a loop query at the given index, otherwise <t>false</t>.
+     */
+    public boolean loopsAt(int index) {
+        return loops.contains(index);
+    }
+
+    /**
+     * Checks whether there has been a restricted-loop query at the given index.
+     *
+     * @param index The index to check at.
+     * @return <t>true</t> if there is a restricted-loop query at the given index, otherwise <t>false</t>.
+     */
+    public boolean doesNotLoopAt(int index) {
+        return restrictedLoops.contains(index);
     }
 
     public enum BranchType {

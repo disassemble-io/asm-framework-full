@@ -97,17 +97,16 @@ public class Debugger implements Opcodes {
                     long start = System.nanoTime();
                     cm.cfg().ifPresent(cfg -> {
                         List<FlowQueryResult> results = cfg.execution().query(
-                            new FlowQuery()
-                                .stmtLoad().name("root-loader")
-                                .stmtIf().dist(1).branch()
-                                .stmtIncrement()
-                                .stmtIf().dist(5).branch()
-                                .stmtStore()
-                                .stmtLoad()
+                                new FlowQuery()
+                                        .stmtIncrement()
+                                        .stmtIncrement()
+                                        .stmtAdd()
+                                        .stmtPush()
+                                        .doesNotLoop()
                         );
                         System.out.println("query results: " + results.size());
                         results.forEach(result -> result.findInstruction("root-loader")
-                            .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
+                                .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
                         cfg.execution().printTree();
                         BufferedImage image = cfg.dotImage(null, null);
                         try {

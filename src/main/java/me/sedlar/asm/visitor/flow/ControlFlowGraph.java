@@ -142,6 +142,7 @@ public class ControlFlowGraph {
         ControlFlowNode node = nodes.get(instruction);
         if (node == null) {
             node = new ControlFlowNode(this, instruction, backwards);
+            node.id = idFor(node);
             nodes.put(instruction, node);
         } else {
             node.backwards = backwards;
