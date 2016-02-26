@@ -42,24 +42,26 @@ public class Debugger implements Opcodes {
                 try {
                     long start = System.nanoTime();
                     cm.cfg().ifPresent(cfg -> {
-                        List<FlowQueryResult> results = cfg.execution().query(
-                                new FlowQuery()
-                                        .stmtIncrement()
-                                        .stmtIncrement()
-                                        .stmtAdd()
-                                        .stmtPush()
-                                        .doesNotLoop()
-                        );
-                        System.out.println("query results: " + results.size());
-                        results.forEach(result -> result.findInstruction("root-loader")
-                                .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
-                        cfg.execution().printTree();
-                        BufferedImage image = cfg.dotImage(null, null);
-                        try {
-                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        cfg.printBasicBlocks();
+//                        cfg.execution().printTree();
+//                        List<FlowQueryResult> results = cfg.execution().query(
+//                                new FlowQuery()
+//                                        .stmtIncrement()
+//                                        .stmtIncrement()
+//                                        .stmtAdd()
+//                                        .stmtPush()
+//                                        .doesNotLoop()
+//                        );
+//                        System.out.println("query results: " + results.size());
+//                        results.forEach(result -> result.findInstruction("root-loader")
+//                                .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
+//                        cfg.execution().printTree();
+//                        BufferedImage image = cfg.dotImage(null, null);
+//                        try {
+//                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
                     });
                     long end = System.nanoTime();
                     System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));

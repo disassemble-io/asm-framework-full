@@ -1,6 +1,8 @@
 package me.sedlar.asm.visitor.flow;
 
+import jdk.nashorn.internal.ir.Block;
 import me.sedlar.asm.ClassMethodVisitor;
+import me.sedlar.asm.util.Assembly;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
@@ -16,12 +18,37 @@ public class FlowVisitor extends ClassMethodVisitor {
     private List<TryCatchBlockNode>[] handlers;
     private boolean visitExceptions = true;
 
+
+    private List<AbstractInsnNode> visited = new ArrayList<>();
+    private List<AbstractInsnNode> currentInstructions = new ArrayList<>();
+    private List<BasicBlock> blocks = new ArrayList<>();
+    private int blockStart, blockEnd;
+
     @SuppressWarnings("unchecked")
     public void setGraphData(ControlFlowGraph graph, int instructionSize, boolean visitExceptions) {
         reset();
         this.graph = graph;
         this.handlers = (List<TryCatchBlockNode>[]) new ArrayList<?>[instructionSize];
         this.visitExceptions = visitExceptions;
+        this.visited.clear();
+        this.currentInstructions.clear();
+        this.blocks.clear();
+    }
+
+    private BasicBlock findBlockWithIndex(int index) {
+        for (BasicBlock block : blocks) {
+            if (index >= block.start && index <= block.end) {
+                return block;
+            }
+        }
+        return null;
+    }
+
+    private void addBlock(int to) {
+        BasicBlock block = new BasicBlock(graph, blockStart, to);
+        block.instructions.addAll(currentInstructions);
+        currentInstructions.clear();
+        blocks.add(block);
     }
 
     private void newControlFlowEdge(int from, int to) {
@@ -29,6 +56,17 @@ public class FlowVisitor extends ClassMethodVisitor {
         AbstractInsnNode toInsn = method.instructions().get(to);
         boolean backwards = (to < from);
         graph.add(fromInsn, toInsn, backwards);
+        if (!visited.contains(fromInsn)) {
+            if (currentInstructions.isEmpty()) {
+                blockStart = from;
+            }
+            currentInstructions.add(fromInsn);
+            if (fromInsn instanceof JumpInsnNode) {
+                addBlock(from);
+            }
+            visited.add(fromInsn);
+        }
+        blockEnd = to;
     }
 
     private void newControlFlowExceptionEdge(int from, int to) {
@@ -58,6 +96,8 @@ public class FlowVisitor extends ClassMethodVisitor {
             int index = method.instructions().indexOf(insn);
             newControlFlowEdge(index, index + 1);
             visitInstructionExceptionEdge(index);
+        } else {
+            currentInstructions.add(insn);
         }
     }
 
@@ -113,7 +153,20 @@ public class FlowVisitor extends ClassMethodVisitor {
 
     @Override
     public void visitEnd() {
-        graph.buildExecution();
+        addBlock(blockEnd);
+        for (BasicBlock block : blocks) {
+            block.endNode().ifPresent(endNode -> {
+                List<ControlFlowNode> succNodes = endNode.successors;
+                for (ControlFlowNode succNode : succNodes) {
+                    BasicBlock succBlock = findBlockWithIndex(method.instructions().indexOf(succNode.instruction));
+                    if (succBlock != null) {
+                        block.successors.add(succBlock);
+                        succBlock.predecessor = block;
+                    }
+                }
+            });
+        }
+        graph.blocks = new ArrayList<>(blocks);
     }
 
     @Override

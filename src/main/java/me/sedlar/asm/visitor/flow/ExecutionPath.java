@@ -188,24 +188,22 @@ public class ExecutionPath {
     }
 
     private void print(String prefix, ExecutionNode node) {
-//        if (!(node.source.instruction instanceof LabelNode || node.source.instruction instanceof FrameNode)) {
-            String label = (prefix + Assembly.toString(node.source.instruction));
-            boolean layered = !node.paths().isEmpty();
-            if (layered) {
-                label += " {";
+        String label = (prefix + Assembly.toString(node.source.instruction));
+        boolean layered = !node.paths().isEmpty();
+        if (layered) {
+            label += " {";
+        }
+        System.out.println(label);
+        for (List<ExecutionNode> path : node.paths()) {
+            System.out.println(prefix + "  {");
+            for (ExecutionNode subNode : path) {
+                print(prefix + "    ", subNode);
             }
-            System.out.println(label);
-            for (List<ExecutionNode> path : node.paths()) {
-                System.out.println(prefix + "  {");
-                for (ExecutionNode subNode : path) {
-                    print(prefix + "    ", subNode);
-                }
-                System.out.println(prefix + "  }");
-            }
-            if (layered) {
-                System.out.println(prefix + "}");
-            }
-//        }
+            System.out.println(prefix + "  }");
+        }
+        if (layered) {
+            System.out.println(prefix + "}");
+        }
     }
 
     public void printTree() {

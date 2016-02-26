@@ -41,6 +41,7 @@ public class ControlFlowGraph {
     private Map<Object, String> nodeIds = new HashMap<>();
     private int nodeId = 1;
     private ExecutionPath execution;
+    protected List<BasicBlock> blocks;
 
     public ControlFlowGraph(Map<AbstractInsnNode, ControlFlowNode> nodes, ClassMethod method) {
         this.nodes = nodes;
@@ -70,8 +71,12 @@ public class ControlFlowGraph {
         return graph;
     }
 
-    protected void buildExecution() {
-        execution = ExecutionPath.build(this);
+    /**
+     * Prints out this graph's BasicBlocks.
+     */
+    public void printBasicBlocks() {
+        List<BasicBlock> printed = new ArrayList<>();
+        blocks.forEach(block -> block.print(printed));
     }
 
     /**
