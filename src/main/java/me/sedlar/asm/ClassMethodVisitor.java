@@ -25,6 +25,15 @@ public class ClassMethodVisitor extends MethodVisitor implements Opcodes {
     }
 
     /**
+     * Resets this class' variables to their default values.
+     */
+    protected void reset() {
+        method = null;
+        idx = 0;
+        locked = false;
+    }
+
+    /**
      * Restricts this visitor from visiting any instructions.
      */
     public void lock() {

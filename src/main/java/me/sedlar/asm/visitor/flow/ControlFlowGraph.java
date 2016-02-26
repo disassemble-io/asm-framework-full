@@ -31,7 +31,8 @@ import java.util.*;
  */
 public class ControlFlowGraph {
 
-    private static final ControlFlowAnalyzer ANALYZER = new ControlFlowAnalyzer();
+    private static final FlowVisitor VISITOR = new FlowVisitor();
+
     /**
      * Map from instructions to nodes
      */
@@ -64,11 +65,13 @@ public class ControlFlowGraph {
     public static synchronized ControlFlowGraph create(ControlFlowGraph initial, ClassMethod method)
             throws AnalyzerException {
         ControlFlowGraph graph = (initial != null ? initial : new ControlFlowGraph(new HashMap<>(), method));
-        InsnList instructions = method.instructions();
-        ANALYZER.graph = graph;
-        ANALYZER.instructions = instructions;
-        ANALYZER.analyze(method);
+        VISITOR.setGraphData(graph, method.instructions().size(), false);
+        method.accept(VISITOR);
         return graph;
+    }
+
+    protected void buildExecution() {
+        execution = ExecutionPath.build(this);
     }
 
     /**
@@ -114,10 +117,12 @@ public class ControlFlowGraph {
     }
 
     /**
-     * Adds an exception flow to this graph
+     * Adds an instruction flow to this graph
      */
     protected void add(AbstractInsnNode from, AbstractInsnNode to, boolean backwards) {
-        nodeFor(from, false).addSuccessor(nodeFor(to, backwards));
+        ControlFlowNode fromNode = nodeFor(from, false);
+        ControlFlowNode toNode = nodeFor(to, backwards);
+        fromNode.addSuccessor(toNode);
     }
 
     /**
@@ -153,23 +158,10 @@ public class ControlFlowGraph {
     /**
      * Gets the execution path for the graph.
      *
-     * @param cached Retrieve by cache, if the execution path has been built before.
-     * @return The execution path for the graph.
-     */
-    public ExecutionPath execution(boolean cached) {
-        if (cached && execution != null) {
-            return execution;
-        }
-        return (execution = ExecutionPath.build(this));
-    }
-
-    /**
-     * Gets the execution path for the graph.
-     *
      * @return The execution path for the graph.
      */
     public ExecutionPath execution() {
-        return execution(true);
+        return execution;
     }
 
     /**
@@ -291,7 +283,7 @@ public class ControlFlowGraph {
         return builder.toString();
     }
 
-    protected String dotDescribe(ControlFlowNode node) {
+    public String dotDescribe(ControlFlowNode node) {
         AbstractInsnNode instruction = node.instruction;
         String opname = Assembly.opname(instruction.getOpcode());
         if (instruction instanceof LabelNode) {
