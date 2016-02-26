@@ -197,4 +197,15 @@ public class BasicBlock {
         List<BasicBlock> printed = new ArrayList<>();
         print(printed);
     }
+
+    protected String toDotDescribe() {
+        StringBuilder builder = new StringBuilder();
+        instructions.forEach(insn -> {
+            if (builder.length() > 0) {
+                builder.append("\n");
+            }
+            builder.append(cfg.dotDescribe(insn.insn));
+        });
+        return builder.toString();
+    }
 }

@@ -67,16 +67,6 @@ public class ControlFlowNode {
     }
 
     /**
-     * Converts this node to a .dot graph format.
-     *
-     * @param highlight A list of nodes to highlight.
-     * @return This node in a .dot graph format.
-     */
-    public String toDot(Set<ControlFlowNode> highlight) {
-        return graph.toDot(instruction, highlight);
-    }
-
-    /**
      * Represents this instruction as a string, for debugging purposes
      *
      * @param includeAdjacent whether it should include a display of

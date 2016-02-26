@@ -5,6 +5,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,12 +55,12 @@ public class Debugger implements Opcodes {
                                         .stmtLoad()
                         );
                         System.out.println("query results: " + results.size());
-//                        BufferedImage image = cfg.dotImage(null, null);
-//                        try {
-//                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
+                        BufferedImage image = cfg.dotImage();
+                        try {
+                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     });
                     long end = System.nanoTime();
                     System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));

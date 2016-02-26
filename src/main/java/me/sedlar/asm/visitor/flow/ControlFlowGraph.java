@@ -64,7 +64,7 @@ public class ControlFlowGraph {
      *                           analyze the method bytecode
      */
     public static synchronized ControlFlowGraph create(ControlFlowGraph initial, ClassMethod method)
-            throws AnalyzerException {
+        throws AnalyzerException {
         ControlFlowGraph graph = (initial != null ? initial : new ControlFlowGraph(new HashMap<>(), method));
         VISITOR.setGraphData(graph, method.instructions().size(), false);
         method.accept(VISITOR);
@@ -261,57 +261,53 @@ public class ControlFlowGraph {
      * @return a dot description of this control flow graph,
      * useful for debugging
      */
-    public String toDot(AbstractInsnNode start, Set<ControlFlowNode> highlight) {
+    public String toDot() {
         StringBuilder builder = new StringBuilder();
         builder.append("digraph G {\n");
-        AbstractInsnNode instruction = (start != null ? start : method.instructions().getFirst());
-        builder.append("  start -> ").append(idFor(nodes.get(instruction))).append(";\n");
+        BasicBlock initial = blocks().get(0);
+        builder.append("  start -> ").append(initial.hashCode()).append(";\n");
         builder.append("  start [shape=plaintext];\n");
-        while (instruction != null) {
-            ControlFlowNode node = nodes.get(instruction);
-            if (node != null) {
-                for (ControlFlowNode to : node.successors) {
-                    builder.append("  ").append(idFor(node)).append(" -> ").append(idFor(to));
-                    if (node.instruction instanceof JumpInsnNode) {
+        List<BasicBlock> iterated = new ArrayList<>();
+        for (BasicBlock block : blocks) {
+            for (BasicBlock bBlock : block.successors()) {
+                if (iterated.contains(bBlock)) {
+                    continue;
+                }
+                iterated.add(bBlock);
+                builder.append("  ").append(block.hashCode()).append(" -> ").append(bBlock.hashCode());
+                block.instructions.stream().filter(insn -> insn.block.successors.size() > 1 &&
+                    insn.insn instanceof JumpInsnNode)
+                    .forEach(insn -> {
                         builder.append(" [label=\"");
-                        if (((JumpInsnNode) node.instruction).label == to.instruction) {
+                        BasicInstruction startInsn = bBlock.startInstruction().orElse(null);
+                        if (startInsn != null && ((JumpInsnNode) insn.insn).label == startInsn.insn) {
                             builder.append("true");
                         } else {
                             builder.append("false");
                         }
                         builder.append("\"]");
-                    }
-                    builder.append(";\n");
-                }
-//                for (ControlFlowNode to : node.exceptions) {
-//                    builder.append(idFor(node)).append(" -> ").append(idFor(to));
-//                    builder.append(" [label=\"exception\"];\n");
-//                }
+                    });
+                builder.append(";\n");
             }
-            instruction = instruction.getNext();
         }
         builder.append("\n");
-        for (ControlFlowNode node : nodes.values()) {
-            instruction = node.instruction;
-            builder.append("  ").append(idFor(node)).append(" ");
-            builder.append("[label=\"").append(dotDescribe(node)).append("\"");
-            if (highlight != null && highlight.contains(node)) {
-                builder.append(",shape=box,style=filled");
-            } else if (instruction instanceof LineNumberNode ||
-                    instruction instanceof LabelNode ||
-                    instruction instanceof FrameNode) {
-                builder.append(",shape=oval,style=dotted");
-            } else {
-                builder.append(",shape=box");
-            }
+        blocks.forEach(bBlock -> {
+            builder.append("  ").append(bBlock.hashCode()).append(" ");
+            builder.append("[label=\"").append(bBlock.toDotDescribe()).append("\"");
+            builder.append(",shape=box");
             builder.append("];\n");
-        }
+        });
         builder.append("}");
         return builder.toString();
     }
 
-    public String dotDescribe(ControlFlowNode node) {
-        AbstractInsnNode instruction = node.instruction;
+    /**
+     * Gets the display information for the given instruction.
+     *
+     * @param instruction The instruction to describe.
+     * @return The display information for the given instruction.
+     */
+    public String dotDescribe(AbstractInsnNode instruction) {
         String opname = Assembly.opname(instruction.getOpcode());
         if (instruction instanceof LabelNode) {
             return "Label";
@@ -338,7 +334,10 @@ public class ControlFlowGraph {
         builder.append(opcodeName);
         if (instruction instanceof IntInsnNode) {
             IntInsnNode iin = (IntInsnNode) instruction;
-            builder.append(" ").append(Integer.toString(iin.operand));
+            builder.append(" ").append(iin.operand);
+        } else if (instruction instanceof VarInsnNode) {
+            VarInsnNode vin = (VarInsnNode) instruction;
+            builder.append(" ").append(vin.var);
         } else if (instruction instanceof LdcInsnNode) {
             LdcInsnNode ldc = (LdcInsnNode) instruction;
             builder.append(" ");
@@ -357,13 +356,11 @@ public class ControlFlowGraph {
      * Creates a PNG image of the graph.
      * This requires GraphViz's bin directory to be on the env path.
      *
-     * @param start     The starting instruction.
-     * @param highlight The nodes to highlight.
      * @return A PNG image of the graph.
      */
-    public BufferedImage dotImage(AbstractInsnNode start, Set<ControlFlowNode> highlight) {
+    public BufferedImage dotImage() {
         try {
-            String dotSource = toDot(start, highlight);
+            String dotSource = toDot();
             String tempDir = System.getProperty("java.io.tmpdir");
             Optional<String> graphViz = EnvPath.find(entry -> entry.contains("Graphviz"));
             boolean windows = System.getProperty("os.name").toLowerCase().contains("windows");
@@ -372,11 +369,11 @@ public class ControlFlowGraph {
             }
             File dotFile = new File(tempDir, method.key() + ".dot");
             Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING);
+                StandardOpenOption.TRUNCATE_EXISTING);
             File imgFile = new File(tempDir, method.key() + ".png");
             String program = (windows ? new File(graphViz.get(), "dot.exe").getAbsolutePath() : "dot");
             ProcessBuilder builder = new ProcessBuilder(program, "-Tpng", dotFile.getAbsolutePath(),
-                    "-o", imgFile.getAbsolutePath());
+                "-o", imgFile.getAbsolutePath());
             Process process = builder.start();
             process.waitFor();
             BufferedImage image = ImageIO.read(imgFile);
