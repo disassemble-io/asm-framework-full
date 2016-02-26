@@ -51,7 +51,7 @@ public class ControlFlowNode {
         this.backwards = backwards;
     }
 
-    void addSuccessor(ControlFlowNode node) {
+    protected void addSuccessor(ControlFlowNode node) {
         if (!successors.contains(node)) {
             successors.add(node);
         }
@@ -60,12 +60,18 @@ public class ControlFlowNode {
         }
     }
 
-    void addExceptionPath(ControlFlowNode node) {
+    protected void addExceptionPath(ControlFlowNode node) {
         if (!exceptions.contains(node)) {
             exceptions.add(node);
         }
     }
 
+    /**
+     * Converts this node to a .dot graph format.
+     *
+     * @param highlight A list of nodes to highlight.
+     * @return This node in a .dot graph format.
+     */
     public String toDot(Set<ControlFlowNode> highlight) {
         return graph.toDot(instruction, highlight);
     }

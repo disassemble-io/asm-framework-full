@@ -14,38 +14,27 @@ import java.util.Optional;
 public class FlowQueryResult {
 
     private final FlowQuery query;
-    private final List<ExecutionNode> nodes;
+    private final List<BasicInstruction> instructions;
 
-    public FlowQueryResult(FlowQuery query, List<ExecutionNode> nodes) {
+    public FlowQueryResult(FlowQuery query, List<BasicInstruction> instructions) {
         this.query = query;
-        this.nodes = nodes;
+        this.instructions = instructions;
     }
 
     /**
-     * Finds the ExecutionNode with the given name.
+     * Finds the BasicInstruction with the given name.
      *
      * @param name The name to search for.
-     * @return The ExecutionNode with the given name.
+     * @return The BasicInstruction with the given name.
      */
-    public Optional<ExecutionNode> findExecutor(String name) {
-        for (int i = 0; i < nodes.size(); i++) {
+    public Optional<BasicInstruction> findBasicInstruction(String name) {
+        for (int i = 0; i < instructions.size(); i++) {
             String nodeName = query.nameAt(i);
             if (nodeName != null && nodeName.equals(name)) {
-                return Optional.ofNullable(nodes.get(i));
+                return Optional.ofNullable(instructions.get(i));
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * Finds the ControlFlowNode with the given name.
-     *
-     * @param name The name to search for.
-     * @return The ControlFlowNode with the given name.
-     */
-    public Optional<ControlFlowNode> findNode(String name) {
-        Optional<ExecutionNode> executor = findExecutor(name);
-        return (executor.isPresent() ? Optional.ofNullable(executor.get().source) : Optional.empty());
     }
 
     /**
@@ -55,8 +44,8 @@ public class FlowQueryResult {
      * @return The AbstractInsnNode with the given name.
      */
     public Optional<AbstractInsnNode> findInstruction(String name) {
-        Optional<ControlFlowNode> node = findNode(name);
-        return (node.isPresent() ? Optional.ofNullable(node.get().instruction) : Optional.empty());
+        Optional<BasicInstruction> insn = findBasicInstruction(name);
+        return (insn.isPresent() ? Optional.ofNullable(insn.get().insn) : Optional.empty());
     }
 
     /**
@@ -66,10 +55,10 @@ public class FlowQueryResult {
      */
     public Map<String, AbstractInsnNode> namedInstructions() {
         Map<String, AbstractInsnNode> instructions = new HashMap<>();
-        for (int i = 0; i < nodes.size(); i++) {
+        for (int i = 0; i < this.instructions.size(); i++) {
             String nodeName = query.nameAt(i);
             if (nodeName != null) {
-                instructions.put(nodeName, nodes.get(i).source.instruction);
+                instructions.put(nodeName, this.instructions.get(i).insn);
             }
         }
         return instructions;

@@ -1,15 +1,10 @@
 import me.sedlar.asm.ClassMethod;
-import me.sedlar.asm.util.Assembly;
 import me.sedlar.asm.visitor.flow.FlowQuery;
 import me.sedlar.asm.visitor.flow.FlowQueryResult;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,20 +37,20 @@ public class Debugger implements Opcodes {
                 try {
                     long start = System.nanoTime();
                     cm.cfg().ifPresent(cfg -> {
-                        cfg.printBasicBlocks();
-//                        cfg.execution().printTree();
-//                        List<FlowQueryResult> results = cfg.execution().query(
-//                                new FlowQuery()
-//                                        .stmtIncrement()
-//                                        .stmtIncrement()
-//                                        .stmtAdd()
-//                                        .stmtPush()
-//                                        .doesNotLoop()
-//                        );
-//                        System.out.println("query results: " + results.size());
-//                        results.forEach(result -> result.findInstruction("root-loader")
-//                                .ifPresent(insn -> System.out.println("root-loader: " + Assembly.toString(insn))));
-//                        cfg.execution().printTree();
+                        cfg.execution().print();
+                        List<FlowQueryResult> results = cfg.execution().query(
+                                new FlowQuery()
+                                        .stmtIncrement()
+                                        .stmtIncrement()
+                                        .stmtAdd()
+                                        .stmtPush()
+                                        .stmtIf()
+                                        .branchTrue()
+                                        .stmtLoad()
+                                        .stmtLoad()
+                                        .stmtLoad()
+                        );
+                        System.out.println("query results: " + results.size());
 //                        BufferedImage image = cfg.dotImage(null, null);
 //                        try {
 //                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));

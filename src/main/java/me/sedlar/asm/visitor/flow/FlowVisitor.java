@@ -1,8 +1,6 @@
 package me.sedlar.asm.visitor.flow;
 
-import jdk.nashorn.internal.ir.Block;
 import me.sedlar.asm.ClassMethodVisitor;
-import me.sedlar.asm.util.Assembly;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
@@ -17,8 +15,7 @@ public class FlowVisitor extends ClassMethodVisitor {
     private ControlFlowGraph graph;
     private List<TryCatchBlockNode>[] handlers;
     private boolean visitExceptions = true;
-
-
+    
     private List<AbstractInsnNode> visited = new ArrayList<>();
     private List<AbstractInsnNode> currentInstructions = new ArrayList<>();
     private List<BasicBlock> blocks = new ArrayList<>();
@@ -45,8 +42,7 @@ public class FlowVisitor extends ClassMethodVisitor {
     }
 
     private void addBlock(int to) {
-        BasicBlock block = new BasicBlock(graph, blockStart, to);
-        block.instructions.addAll(currentInstructions);
+        BasicBlock block = new BasicBlock(graph, blockStart, to, currentInstructions);
         currentInstructions.clear();
         blocks.add(block);
     }

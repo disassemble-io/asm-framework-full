@@ -1,57 +1,81 @@
 package me.sedlar.asm.visitor.flow;
 
-import me.sedlar.asm.util.Assembly;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  * @author Tyler Sedlar
- * @since 2/12/2016
+ * @since 2/26/2016
  */
 public class ExecutionPath {
 
-    private static final Predicate<ExecutionNode> LABEL_PRED = (e) -> e.source.instruction instanceof LabelNode;
-    private static final Predicate<ExecutionNode> JUMP_PRED = (e) -> e.source.instruction instanceof JumpInsnNode;
+    private static final Predicate<BasicInstruction> LABEL_PRED = (b) -> b.insn instanceof LabelNode;
+    private static final Predicate<BasicInstruction> JUMP_PRED = (b) -> b.insn instanceof JumpInsnNode;
 
-    private final List<ExecutionNode> nodes = new ArrayList<>();
-    protected final Map<String, ExecutionNode> idMap = new HashMap<>();
+    private final List<BasicBlock> blocks;
 
-    private void findAll(ExecutionNode parent, Predicate<ExecutionNode> predicate,
-                         List<ExecutionNode> list, boolean recursive) {
-        if (predicate.test(parent)) {
-            list.add(parent);
+    public ExecutionPath(List<BasicBlock> blocks) {
+        this.blocks = blocks;
+    }
+
+    private void findAll(BasicBlock parent, Predicate<BasicInstruction> predicate,
+                         List<BasicInstruction> list, boolean recursive, List<BasicBlock> visited) {
+        if (visited.contains(parent)) {
+            return;
         }
-        for (List<ExecutionNode> path : parent.paths()) {
-            for (ExecutionNode node : path) {
-                if (recursive) {
-                    findAll(node, predicate, list, true);
-                } else {
-                    if (predicate.test(node)) {
-                        list.add(node);
-                    }
-                }
+        parent.instructions().forEach(insn -> {
+            if (predicate.test(insn)) {
+                list.add(insn);
             }
+        });
+        visited.add(parent);
+        if (recursive) {
+            parent.successors().forEach(block -> findAll(block, predicate, list, true, visited));
         }
     }
 
     /**
-     * Finds all nodes matching the given predicate.
+     * Finds all instructions matching the given predicate.
      *
      * @param predicate The predicate to match against.
-     * @return A list of all nodes matching the given predicate.
+     * @return A list of all instructions matching the given predicate.
      */
-    public List<ExecutionNode> findAll(Predicate<ExecutionNode> predicate) {
-        List<ExecutionNode> result = new ArrayList<>();
-        for (ExecutionNode node : nodes) {
-            findAll(node, predicate, result, true);
+    public List<BasicInstruction> findAll(Predicate<BasicInstruction> predicate) {
+        List<BasicBlock> visited = new ArrayList<>();
+        List<BasicInstruction> result = new ArrayList<>();
+        for (BasicBlock block : blocks) {
+            findAll(block, predicate, result, true, visited);
         }
         return result;
+    }
+
+    private BasicInstruction findNext(BasicInstruction start, Predicate<BasicInstruction> predicate, int maxDist) {
+        BasicInstruction insn = start;
+        int jump = 0;
+        while ((insn = insn.next()) != null && (jump == -1 || jump++ < maxDist)) {
+            if (predicate.test(insn)) {
+                return insn;
+            }
+        }
+        return null;
+    }
+
+    private BasicInstruction findPrevious(BasicInstruction start, Predicate<BasicInstruction> predicate, int maxDist) {
+        BasicInstruction insn = start;
+        int jump = 0;
+        while ((insn = insn.previous()) != null && (jump == -1 || jump++ < maxDist)) {
+            if (predicate.test(insn)) {
+                return insn;
+            }
+        }
+        return null;
     }
 
     /**
@@ -62,30 +86,30 @@ public class ExecutionPath {
      */
     public List<FlowQueryResult> query(FlowQuery query) {
         List<FlowQueryResult> results = new ArrayList<>();
-        List<Predicate<ExecutionNode>> predicates = query.predicates();
+        List<Predicate<BasicInstruction>> predicates = query.predicates();
         if (predicates.isEmpty()) {
             return results;
         }
-        List<ExecutionNode> lastMatch = null;
+        List<BasicInstruction> lastMatch = null;
         boolean branching = false;
         FlowQuery.BranchType branchType = null;
-        List<ExecutionNode> endings = new ArrayList<>();
+        List<BasicInstruction> endings = new ArrayList<>();
         for (int i = 0; i < predicates.size(); i++) {
-            Predicate<ExecutionNode> predicate = predicates.get(i);
-            List<ExecutionNode> matching;
+            Predicate<BasicInstruction> predicate = predicates.get(i);
+            List<BasicInstruction> matching;
             if (branching) {
-                List<ExecutionNode> branchInstructions = new ArrayList<>();
-                for (ExecutionNode node : lastMatch) {
-                    Consumer<List<ExecutionNode>> consumer = (nodeList -> {
-                        branchInstructions.addAll(nodeList);
-                        nodeList.forEach(eNode -> eNode.previousExecutor = node);
+                List<BasicInstruction> branchInstructions = new ArrayList<>();
+                for (BasicInstruction insn : lastMatch) {
+                    Consumer<BasicBlock> consumer = (block -> {
+                        branchInstructions.addAll(block.instructions);
+                        block.instructions.forEach(bInsn -> bInsn.previous = insn);
                     });
                     if (branchType == FlowQuery.BranchType.TRUE) {
-                        node.truePath().ifPresent(consumer);
+                        insn.block.trueBranch().ifPresent(consumer);
                     } else if (branchType == FlowQuery.BranchType.FALSE) {
-                        node.falsePath().ifPresent(consumer);
+                        insn.block.falseBranch().ifPresent(consumer);
                     } else {
-                        node.paths().forEach(consumer);
+                        insn.block.successors().forEach(consumer);
                     }
                 }
                 matching = branchInstructions.stream().filter(predicate::test).collect(Collectors.toList());
@@ -94,40 +118,41 @@ public class ExecutionPath {
                     matching = findAll(predicate);
                 } else {
                     matching = new ArrayList<>();
-                    for (ExecutionNode node : lastMatch) {
-                        ExecutionNode result = findNext(node, predicate, query.distAt(i));
+                    for (BasicInstruction insn : lastMatch) {
+                        BasicInstruction result = findNext(insn, predicate, query.distAt(i));
                         if (result != null) {
                             boolean loops = query.loopsAt(i);
                             boolean doesNotLoop = query.doesNotLoopAt(i);
                             if (loops || doesNotLoop) {
-                                ExecutionNode parent = node.parent;
-                                ExecutionNode parentLabel = null;
+                                BasicInstruction parent = insn.parent();
+                                BasicInstruction parentLabel = null;
                                 while (parent != null && (parentLabel = findPrevious(parent, LABEL_PRED, 5)) == null) {
-                                    parent = parent.parent;
+                                    parent = parent.parent();
                                 }
                                 if (parentLabel == null) {
                                     continue;
                                 }
                                 boolean valid = false;
-                                List<ExecutionNode> jumps = new ArrayList<>();
-                                findAll(node.parent, JUMP_PRED, jumps, false);
+                                List<BasicInstruction> jumps = new ArrayList<>();
+                                List<BasicBlock> visited = new ArrayList<>();
+                                findAll(insn.block, JUMP_PRED, jumps, false, visited);
                                 if (!jumps.isEmpty()) {
-                                    for (ExecutionNode jump : jumps) {
-                                        LabelNode label = ((JumpInsnNode) jump.source.instruction).label;
-                                        if (label == parentLabel.source.instruction) {
+                                    for (BasicInstruction jump : jumps) {
+                                        LabelNode label = ((JumpInsnNode) jump.insn).label;
+                                        if (label == parentLabel.insn) {
                                             valid = true;
                                         }
                                     }
                                 }
                                 if (!valid) {
                                     if (doesNotLoop) {
-                                        result.previousExecutor = node;
+                                        result.previous = insn;
                                         matching.add(result);
                                     }
                                     continue;
                                 }
                             }
-                            result.previousExecutor = node;
+                            result.previous = insn;
                             matching.add(result);
                         }
                     }
@@ -143,12 +168,12 @@ public class ExecutionPath {
             branching = query.branchesAt(i);
             branchType = query.branchTypeAt(i);
         }
-        for (ExecutionNode node : endings) {
-            List<ExecutionNode> hierarchy = new ArrayList<>();
-            hierarchy.add(node);
-            while (node.previousExecutor != null) {
-                hierarchy.add(node.previousExecutor);
-                node = node.previousExecutor;
+        for (BasicInstruction insn : endings) {
+            List<BasicInstruction> hierarchy = new ArrayList<>();
+            hierarchy.add(insn);
+            while (insn.previous != null) {
+                hierarchy.add(insn.previous);
+                insn = insn.previous;
             }
             Collections.reverse(hierarchy);
             results.add(new FlowQueryResult(query, hierarchy));
@@ -156,115 +181,11 @@ public class ExecutionPath {
         return results;
     }
 
-    private ExecutionNode findNext(ExecutionNode start, Predicate<ExecutionNode> predicate, int maxDist) {
-        ExecutionNode node = start;
-        int jump = 0;
-        while ((node = node.next()) != null && (jump == -1 || jump++ < maxDist)) {
-            if (predicate.test(node)) {
-                return node;
-            }
-        }
-        return null;
-    }
-
-    private ExecutionNode findPrevious(ExecutionNode start, Predicate<ExecutionNode> predicate, int maxDist) {
-        ExecutionNode node = start;
-        int jump = 0;
-        while ((node = node.previous()) != null && (jump == -1 || jump++ < maxDist)) {
-            if (predicate.test(node)) {
-                return node;
-            }
-        }
-        return null;
-    }
-
-    private void add(ControlFlowGraph cfg, ExecutionNode eNode) {
-        nodes.add(eNode);
-        idMap.put(cfg.idFor(eNode.source), eNode);
-    }
-
-    protected ExecutionNode findById(String id) {
-        return idMap.get(id);
-    }
-
-    private void print(String prefix, ExecutionNode node) {
-        String label = (prefix + Assembly.toString(node.source.instruction));
-        boolean layered = !node.paths().isEmpty();
-        if (layered) {
-            label += " {";
-        }
-        System.out.println(label);
-        for (List<ExecutionNode> path : node.paths()) {
-            System.out.println(prefix + "  {");
-            for (ExecutionNode subNode : path) {
-                print(prefix + "    ", subNode);
-            }
-            System.out.println(prefix + "  }");
-        }
-        if (layered) {
-            System.out.println(prefix + "}");
-        }
-    }
-
-    public void printTree() {
-        for (ExecutionNode node : nodes) {
-            print("", node);
-        }
-    }
-
-    private static void addSuccessors(ControlFlowGraph cfg, ExecutionPath path, ExecutionNode eNode,
-                                      ExecutionNode parent, List<String> added,
-                                      List<ExecutionNode> successors) {
-        if (eNode.source.backwards) {
-            return;
-        }
-        String nodeId = cfg.idFor(eNode.source);
-        if (!added.contains(nodeId)) {
-            added.add(nodeId);
-            path.idMap.put(nodeId, eNode);
-            eNode.source.successors.forEach(subNode -> {
-                ExecutionNode eSubNode = new ExecutionNode(path, parent, subNode);
-                parent.add(cfg, eSubNode);
-                successors.add(eSubNode);
-                addSuccessors(cfg, path, eSubNode, (subNode.successors.size() > 1 ? eSubNode : parent),
-                        added, successors);
-            });
-            parent.branch();
-        }
-    }
-
-    private static void setNextNodes(List<ExecutionNode> nodes) {
-        ExecutionNode previous = null;
-        for (ExecutionNode node : nodes) {
-            if (previous != null) {
-                previous.nextNode = node;
-                node.previousNode = previous;
-            }
-            node.paths().forEach(ExecutionPath::setNextNodes);
-            previous = node;
-        }
-    }
-
-    public static ExecutionPath build(ControlFlowGraph cfg) {
-        ExecutionPath path = new ExecutionPath();
-        AbstractInsnNode insn = cfg.method.instructions().getFirst();
-        List<String> added = new ArrayList<>();
-        while (insn != null) {
-            ControlFlowNode node = cfg.nodeFor(insn, false);
-            if (node != null) {
-                String nodeId = cfg.idFor(node);
-                if (path.findById(nodeId) == null) {
-                    ExecutionNode eNode = new ExecutionNode(path, null, node);
-                    if (eNode.source.successors.size() > 1) {
-                        List<ExecutionNode> successors = new ArrayList<>();
-                        addSuccessors(cfg, path, eNode, eNode, added, successors);
-                    }
-                    path.add(cfg, eNode);
-                }
-            }
-            insn = insn.getNext();
-        }
-        setNextNodes(path.nodes);
-        return path;
+    /**
+     * Prints out the path's BasicBlocks.
+     */
+    public void print() {
+        List<BasicBlock> printed = new ArrayList<>();
+        blocks.forEach(block -> block.print(printed));
     }
 }

@@ -40,8 +40,8 @@ public class ControlFlowGraph {
     public final ClassMethod method;
     private Map<Object, String> nodeIds = new HashMap<>();
     private int nodeId = 1;
-    private ExecutionPath execution;
     protected List<BasicBlock> blocks;
+    private ExecutionPath execution;
 
     public ControlFlowGraph(Map<AbstractInsnNode, ControlFlowNode> nodes, ClassMethod method) {
         this.nodes = nodes;
@@ -72,11 +72,42 @@ public class ControlFlowGraph {
     }
 
     /**
+     * Obtains a list of this graph's BasicBlocks.
+     *
+     * @return A list of this graph's BasicBlocks.
+     */
+    public List<BasicBlock> blocks() {
+        return blocks;
+    }
+
+    /**
      * Prints out this graph's BasicBlocks.
      */
     public void printBasicBlocks() {
         List<BasicBlock> printed = new ArrayList<>();
         blocks.forEach(block -> block.print(printed));
+    }
+
+    /**
+     * Gets the execution path for the graph.
+     *
+     * @param cached Retrieve by cache, if the execution path has been built before.
+     * @return The execution path for the graph.
+     */
+    public ExecutionPath execution(boolean cached) {
+        if (cached && execution != null) {
+            return execution;
+        }
+        return (execution = new ExecutionPath(blocks()));
+    }
+
+    /**
+     * Gets the execution path for the graph.
+     *
+     * @return The execution path for the graph.
+     */
+    public ExecutionPath execution() {
+        return execution(true);
     }
 
     /**
@@ -158,15 +189,6 @@ public class ControlFlowGraph {
             node.backwards = backwards;
         }
         return node;
-    }
-
-    /**
-     * Gets the execution path for the graph.
-     *
-     * @return The execution path for the graph.
-     */
-    public ExecutionPath execution() {
-        return execution;
     }
 
     /**
