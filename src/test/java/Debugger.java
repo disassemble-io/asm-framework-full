@@ -55,12 +55,7 @@ public class Debugger implements Opcodes {
                                         .stmtLoad()
                         );
                         System.out.println("query results: " + results.size());
-                        BufferedImage image = cfg.dotImage();
-                        try {
-                            ImageIO.write(image, "png", new File("./src/test/excluded-java/out/" + cm.key() + ".png"));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        cfg.renderToSVG(new File("./src/test/excluded-java/out/" + cm.key() + ".svg"));
                     });
                     long end = System.nanoTime();
                     System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));

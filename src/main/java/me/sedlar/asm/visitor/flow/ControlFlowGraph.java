@@ -320,12 +320,12 @@ public class ControlFlowGraph {
             MethodInsnNode method = (MethodInsnNode) instruction;
             String cls = method.owner.substring(method.owner.lastIndexOf('/') + 1);
             cls = cls.replace('$', '.');
-            return (opname + "\n" + cls + "." + method.name + "\n" + method.desc);
+            return (opname + " " + cls + "." + method.name + method.desc);
         } else if (instruction instanceof FieldInsnNode) {
             FieldInsnNode field = (FieldInsnNode) instruction;
             String cls = field.owner.substring(field.owner.lastIndexOf('/') + 1);
             cls = cls.replace('$', '.');
-            return (opname + "\n" + cls + "." + field.name + "\n" + field.desc);
+            return (opname + " " + cls + "." + field.name + field.desc);
         } else if (instruction instanceof TypeInsnNode && instruction.getOpcode() == Opcodes.NEW) {
             return ("New " + ((TypeInsnNode) instruction).desc);
         }
@@ -353,12 +353,10 @@ public class ControlFlowGraph {
     }
 
     /**
-     * Creates a PNG image of the graph.
+     * Creates an SVG image of the graph.
      * This requires GraphViz's bin directory to be on the env path.
-     *
-     * @return A PNG image of the graph.
      */
-    public BufferedImage dotImage() {
+    public void renderToSVG(File output) {
         try {
             String dotSource = toDot();
             String tempDir = System.getProperty("java.io.tmpdir");
@@ -367,21 +365,20 @@ public class ControlFlowGraph {
             if (!graphViz.isPresent() && windows) {
                 throw new IllegalStateException("GraphViz is not on Environment.PATH");
             }
-            File dotFile = new File(tempDir, method.key() + ".dot");
+            String validMethodKey = method.key().replace("<", "").replace(">", "");
+            File dotFile = new File(tempDir, validMethodKey + ".dot");
             Files.write(Paths.get(dotFile.toURI()), dotSource.getBytes(), StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING);
-            File imgFile = new File(tempDir, method.key() + ".png");
             String program = (windows ? new File(graphViz.get(), "dot.exe").getAbsolutePath() : "dot");
-            ProcessBuilder builder = new ProcessBuilder(program, "-Tpng", dotFile.getAbsolutePath(),
-                "-o", imgFile.getAbsolutePath());
+            ProcessBuilder builder = new ProcessBuilder(program, "-Tsvg", dotFile.getAbsolutePath(),
+                "-o", output.getAbsolutePath());
             Process process = builder.start();
             process.waitFor();
-            BufferedImage image = ImageIO.read(imgFile);
-            Files.delete(Paths.get(imgFile.toURI()));
-            return image;
+//            BufferedImage image = ImageIO.read(imgFile);
+//            Files.delete(Paths.get(imgFile.toURI()));
+//            return image;
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
-            return null;
         }
     }
 }
