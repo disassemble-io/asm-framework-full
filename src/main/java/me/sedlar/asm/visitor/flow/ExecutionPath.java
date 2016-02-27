@@ -3,6 +3,9 @@ package me.sedlar.asm.visitor.flow;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -187,5 +190,26 @@ public class ExecutionPath {
     public void print() {
         List<BasicBlock> printed = new ArrayList<>();
         blocks.forEach(block -> block.print(printed));
+    }
+
+    public void printIds() {
+        List<BasicBlock> printed = new ArrayList<>();
+        blocks.forEach(block -> block.printIds(printed));
+    }
+
+    /**
+     * Writes the printed data out to the given file.
+     *
+     * @param file The file to write to.
+     */
+    public void writeToFile(File file) {
+        PrintStream out = System.out;
+        try (PrintStream stream = new PrintStream(file)) {
+            System.setOut(stream);
+            print();
+            System.setOut(out);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

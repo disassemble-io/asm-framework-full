@@ -1,6 +1,7 @@
 package me.sedlar.asm.visitor.flow;
 
 import me.sedlar.asm.ClassMethodVisitor;
+import me.sedlar.asm.util.AlphaLabel;
 import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class FlowVisitor extends ClassMethodVisitor {
     }
 
     private void addBlock(int to) {
-        BasicBlock block = new BasicBlock(graph, blockStart, to, currentInstructions);
+        BasicBlock block = new BasicBlock(graph, AlphaLabel.get(blocks.size()), blockStart, to, currentInstructions);
         currentInstructions.clear();
         blocks.add(block);
     }

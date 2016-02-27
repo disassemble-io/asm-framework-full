@@ -4,6 +4,7 @@ import me.sedlar.asm.ClassFactory;
 import me.sedlar.asm.ClassMethod;
 import me.sedlar.asm.util.Query;
 import me.sedlar.asm.visitor.flow.FlowQuery;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.*;
@@ -14,7 +15,7 @@ import java.util.stream.Collectors;
  * @author Tyler Sedlar
  * @since 2/15/2016
  */
-public abstract class BytecodeParser implements Predicate<ClassFactory> {
+public abstract class BytecodeParser implements Predicate<ClassFactory>, Opcodes {
 
     public final List<String> expectedValues = new ArrayList<>();
     public final Map<String, List<AbstractInsnNode>> foundValues = new HashMap<>();

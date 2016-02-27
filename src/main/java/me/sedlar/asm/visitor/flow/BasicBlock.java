@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class BasicBlock {
 
     public final ControlFlowGraph cfg;
+    public final String id;
     public final int start, end;
 
     protected final List<BasicInstruction> instructions = new ArrayList<>();
@@ -24,8 +25,9 @@ public class BasicBlock {
     protected BasicBlock predecessor;
     protected List<BasicBlock> successors = new ArrayList<>();
 
-    public BasicBlock(ControlFlowGraph cfg, int start, int end, List<AbstractInsnNode> insns) {
+    public BasicBlock(ControlFlowGraph cfg, String id, int start, int end, List<AbstractInsnNode> insns) {
         this.cfg = cfg;
+        this.id = id;
         this.start = start;
         this.end = end;
         instructions.addAll(insns.stream().map(insn -> new BasicInstruction(this, insn)).collect(Collectors.toList()));
@@ -171,10 +173,12 @@ public class BasicBlock {
             block.print(prefix, (hasSuccessor ? " { " : ""));
             if (hasSuccessor) {
                 block.successors.forEach(succ -> {
-                    System.out.println(prefix + "  {");
-                    printBlock(succ, prefix + "    ", printed);
-                    System.out.println(prefix + "  }");
-                    printed.add(succ);
+                    if (!printed.contains(succ)) {
+                        System.out.println(prefix + "  {");
+                        printBlock(succ, prefix + "    ", printed);
+                        System.out.println(prefix + "  }");
+                        printed.add(succ);
+                    }
                 });
                 System.out.println(prefix + "}");
             }
@@ -196,6 +200,50 @@ public class BasicBlock {
     public void print() {
         List<BasicBlock> printed = new ArrayList<>();
         print(printed);
+    }
+
+    private void printId(String prepend, String suffix) {
+        String result = (prepend + id + " <" + start + " - " + end + ">");
+        result += suffix;
+        System.out.println(result);
+    }
+
+    private void printBlockIds(BasicBlock block, String prefix, List<BasicBlock> printed) {
+        if (!printed.contains(block)) {
+            printed.add(block);
+            boolean hasSuccessor = false;
+            for (BasicBlock successor : block.successors) {
+                if (!printed.contains(successor)) {
+                    hasSuccessor = true;
+                }
+            }
+            block.printId(prefix, "");
+            if (hasSuccessor) {
+                block.successors.forEach(succ -> {
+                    if (!printed.contains(succ)) {
+                        printBlockIds(succ, prefix + "  ", printed);
+                        printed.add(succ);
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * Prints the block out in a basic and readable manner.
+     *
+     * @param printed An empty or pre-filled list used for preventing StackOverflowExceptions
+     */
+    public void printIds(List<BasicBlock> printed) {
+        printBlockIds(this, "", printed);
+    }
+
+    /**
+     * Prints the block out in a basic and readable manner.
+     */
+    public void printIds() {
+        List<BasicBlock> printed = new ArrayList<>();
+        printIds(printed);
     }
 
     protected String toDotDescribe() {

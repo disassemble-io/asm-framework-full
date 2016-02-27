@@ -5,7 +5,6 @@ import org.objectweb.asm.tree.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author The Android Open Source Project, Tyler Sedlar
