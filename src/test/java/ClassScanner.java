@@ -1,5 +1,5 @@
-import me.sedlar.asm.ClassFactory;
-import me.sedlar.asm.ClassMethod;
+import io.disassemble.asm.ClassFactory;
+import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;

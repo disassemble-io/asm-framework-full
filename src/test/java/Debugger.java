@@ -1,6 +1,6 @@
-import me.sedlar.asm.ClassMethod;
-import me.sedlar.asm.visitor.flow.FlowQuery;
-import me.sedlar.asm.visitor.flow.FlowQueryResult;
+import io.disassemble.asm.ClassMethod;
+import io.disassemble.asm.visitor.flow.FlowQuery;
+import io.disassemble.asm.visitor.flow.FlowQueryResult;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
