@@ -54,7 +54,7 @@ public class StackInterpreter extends BasicInterpreter implements Opcodes {
     }
 
     @Override
-    public BasicValue naryOperation(AbstractInsnNode insn, List vals) throws AnalyzerException {
+    public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> vals) throws AnalyzerException {
         BasicValue superVal = super.naryOperation(insn, vals);
         if (superVal != null) {
             addEntry(superVal, insn);
