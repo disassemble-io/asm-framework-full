@@ -1,8 +1,6 @@
 package io.disassemble.asm;
 
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
-import org.objectweb.asm.tree.MethodNode;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -24,11 +22,11 @@ public class ClassFactory {
         this.node = node;
         this.fields = new ClassField[node.fields.size()];
         for (int i = 0; i < this.fields.length; i++) {
-            this.fields[i] = new ClassField(this, (FieldNode) node.fields.get(i));
+            this.fields[i] = new ClassField(this, node.fields.get(i));
         }
         this.methods = new ClassMethod[node.methods.size()];
         for (int i = 0; i < this.methods.length; i++) {
-            this.methods[i] = new ClassMethod(this, (MethodNode) node.methods.get(i));
+            this.methods[i] = new ClassMethod(this, node.methods.get(i));
         }
     }
 

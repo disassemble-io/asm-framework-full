@@ -55,7 +55,7 @@ public class Debugger implements Opcodes {
                                         .stmtLoad()
                         );
                         System.out.println("query results: " + results.size());
-                        cfg.renderToSVG(new File("./src/test/excluded-java/out/" + cm.key() + ".svg"));
+//                        cfg.renderToSVG(new File("./src/test/excluded-java/out/" + cm.key() + ".svg"));
                     });
                     long end = System.nanoTime();
                     System.out.println(String.format("took: %.2f seconds", (end - start) / 1e9));

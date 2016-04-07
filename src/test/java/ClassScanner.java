@@ -59,9 +59,8 @@ public class ClassScanner {
                 return;
             }
             ClassFactory factory = new ClassFactory(node);
-            List methods = node.methods;
-            for (Object methodObject : methods) {
-                ClassMethod method = new ClassMethod(factory, (MethodNode) methodObject);
+            for (MethodNode mn : node.methods) {
+                ClassMethod method = new ClassMethod(factory, mn);
                 consumer.accept(method);
             }
         } catch (IOException e) {
