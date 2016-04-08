@@ -1,25 +1,23 @@
 package io.disassemble.asm;
 
+import io.disassemble.asm.pattern.nano.AdvancedNanoPattern;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
 import io.disassemble.asm.pattern.nano.calling.*;
+import io.disassemble.asm.pattern.nano.flow.control.Exceptions;
+import io.disassemble.asm.pattern.nano.flow.control.Looping;
 import io.disassemble.asm.pattern.nano.flow.control.StraightLine;
 import io.disassemble.asm.pattern.nano.flow.data.*;
 import io.disassemble.asm.pattern.nano.oop.FieldReader;
 import io.disassemble.asm.pattern.nano.oop.FieldWriter;
+import io.disassemble.asm.pattern.nano.oop.ObjectCreator;
 import io.disassemble.asm.pattern.nano.oop.TypeManipulator;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.visitor.flow.ControlFlowGraph;
-import io.disassemble.asm.pattern.nano.AdvancedNanoPattern;
-import io.disassemble.asm.pattern.nano.flow.control.Exceptions;
-import io.disassemble.asm.pattern.nano.flow.control.Looping;
-import io.disassemble.asm.pattern.nano.oop.ObjectCreator;
-import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.analysis.AnalyzerException;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -33,20 +31,19 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
 public class ClassMethod {
 
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
-        new NoParams(), new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
-        new StraightLine(), new Looping(), new Exceptions(), // Control Flow
+            new NoParams(), new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
+            new StraightLine(), new Looping(), new Exceptions(), // Control Flow
     };
 
     private static final AdvancedNanoPattern[] ADVANCED_NANO_PATTERNS = {
-        new ObjectCreator(), new FieldReader(), new FieldWriter(), new TypeManipulator(), // Object-Oriented
-        new LocalReader(), new LocalWriter(), new ArrayCreator(), new ArrayReader(), new ArrayWriter() // Data Flow
+            new ObjectCreator(), new FieldReader(), new FieldWriter(), new TypeManipulator(), // Object-Oriented
+            new LocalReader(), new LocalWriter(), new ArrayCreator(), new ArrayReader(), new ArrayWriter() // Data Flow
     };
 
     private static final Map<String, ClassMethod> cached = new HashMap<>();
 
     public final ClassFactory owner;
     public final MethodNode method;
-    public final Handle handle;
 
     private List<String> simpleNanoPatterns, advancedNanoPatterns;
 
@@ -55,7 +52,6 @@ public class ClassMethod {
     public ClassMethod(ClassFactory owner, MethodNode method) {
         this.owner = owner;
         this.method = method;
-        this.handle = new Handle(0, owner.node.name, method.name, method.desc);
         cached.put(key(), this);
     }
 
@@ -341,15 +337,10 @@ public class ClassMethod {
      * @return A ControlFlowGraph for this method.
      */
     public Optional<ControlFlowGraph> cfg(boolean cached) {
-        ControlFlowGraph graph = cfg;
         if (!cached || cfg == null) {
-            try {
-                graph = (cfg = ControlFlowGraph.create(null, this));
-            } catch (AnalyzerException e) {
-                e.printStackTrace();
-            }
+            cfg = ControlFlowGraph.create(this);
         }
-        return Optional.ofNullable(graph);
+        return Optional.ofNullable(cfg);
     }
 
     /**
@@ -364,6 +355,6 @@ public class ClassMethod {
     @Override
     public boolean equals(Object o) {
         return (o instanceof ClassMethod && ((ClassMethod) o).key().equals(key())) ||
-            (o instanceof MethodNode && method.equals(o));
+                (o instanceof MethodNode && method.equals(o));
     }
 }

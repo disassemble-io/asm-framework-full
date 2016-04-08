@@ -1,8 +1,8 @@
 package io.disassemble.asm.pattern.nano.calling;
 
+import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.pattern.nano.PatternInfo;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
-import io.disassemble.asm.ClassMethod;
 
 /**
  * @author Tyler Sedlar

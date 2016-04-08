@@ -1,9 +1,9 @@
 package io.disassemble.asm.visitor.flow;
 
 import io.disassemble.asm.ClassFactory;
-import io.disassemble.asm.util.StringMatcher;
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Query;
+import io.disassemble.asm.util.StringMatcher;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
@@ -82,6 +82,16 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
     public FlowQuery restrictToMethod(Predicate<ClassMethod> predicate) {
         restrictToMethod = predicate;
         return this;
+    }
+
+    /**
+     * Sets this FlowQuery to only query methods that match the given desc.
+     *
+     * @param desc The desc to match against.
+     * @return This FlowQuery chained to only query methods that match the given desc.
+     */
+    public FlowQuery restrictToMethodDesc(Supplier<String> desc) {
+        return restrictToMethod(cm -> StringMatcher.matches(desc.get(), cm.desc()));
     }
 
     /**

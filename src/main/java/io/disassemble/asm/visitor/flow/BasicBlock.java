@@ -1,93 +1,43 @@
 package io.disassemble.asm.visitor.flow;
 
+import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Assembly;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @author Tyler Sedlar
- * @since 2/26/2016
+ * @since 4/7/2016
  */
 public class BasicBlock {
 
-    public final ControlFlowGraph cfg;
+    protected final List<BasicBlock> successors = new ArrayList<>();
+    protected BasicBlock predecessor;
+
     public final String id;
+    public final ClassMethod method;
     public final int start, end;
 
-    protected final List<BasicInstruction> instructions = new ArrayList<>();
+    private BasicInstruction[] instructions;
+    private Integer[] instructionIndices;
 
-    protected BasicBlock predecessor;
-    protected List<BasicBlock> successors = new ArrayList<>();
-
-    public BasicBlock(ControlFlowGraph cfg, String id, int start, int end, List<AbstractInsnNode> insns) {
-        this.cfg = cfg;
+    public BasicBlock(String id, ClassMethod method, int start, int end, List<Integer> instructionIndices) {
         this.id = id;
+        this.method = method;
         this.start = start;
         this.end = end;
-        instructions.addAll(insns.stream().map(insn -> new BasicInstruction(this, insn)).collect(Collectors.toList()));
+        this.instructionIndices = instructionIndices.toArray(new Integer[instructionIndices.size()]);
     }
 
     /**
-     * Gets the starting node of this block.
+     * Gets the list of successors for this BasicBlock.
      *
-     * @return The starting node of this block.
+     * @return The list of sucessors for this BasicBlock.
      */
-    public Optional<ControlFlowNode> startNode() {
-        if (instructions.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(cfg.nodeFor(instructions.get(0).insn, false));
-    }
-
-    /**
-     * Gets the starting instruction of this block.
-     *
-     * @return The starting instruction of this block.
-     */
-    public Optional<BasicInstruction> startInstruction() {
-        if (instructions.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(instructions.get(0));
-    }
-
-    /**
-     * Gets the ending node of this block.
-     *
-     * @return The ending node of this block.
-     */
-    public Optional<ControlFlowNode> endNode() {
-        if (instructions.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(cfg.nodeFor(instructions.get(instructions.size() - 1).insn, false));
-    }
-
-    /**
-     * Gets the ending instruction of this block.
-     *
-     * @return The ending instruction of this block.
-     */
-    public Optional<BasicInstruction> endInstruction() {
-        if (instructions.isEmpty()) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(instructions.get(instructions.size() -1));
-    }
-
-    /**
-     * Gets a list of instructions within this block.
-     *
-     * @return A list of instructions within this block.
-     */
-    public List<BasicInstruction> instructions() {
-        return instructions;
+    public List<BasicBlock> successors() {
+        return Collections.unmodifiableList(successors);
     }
 
     /**
@@ -99,13 +49,72 @@ public class BasicBlock {
         return predecessor;
     }
 
+    public int size() {
+        return instructionIndices.length;
+    }
+
     /**
-     * Gets the list of successors for this BasicBlock.
+     * Gets the starting instruction of this block.
      *
-     * @return The list of sucessors for this BasicBlock.
+     * @return The starting instruction of this block.
      */
-    public List<BasicBlock> successors() {
-        return successors;
+    public BasicInstruction entry() {
+        return instructions()[0];
+    }
+
+    /**
+     * Gets the ending instruction of this block.
+     *
+     * @return The ending instruction of this block.
+     */
+    public BasicInstruction exit() {
+        BasicInstruction[] insns = instructions();
+        return insns[insns.length - 1];
+    }
+
+    /**
+     * Gets a list of instructions within this block.
+     *
+     * @param cached whether to grab a cached list of instructions or not.
+     * @return A list of instructions within this block.
+     */
+    public BasicInstruction[] instructions(boolean cached) {
+        if (!cached || instructions == null) {
+            instructions = new BasicInstruction[size()];
+            for (int i = 0; i < instructions.length; i++) {
+                instructions[i] = new BasicInstruction(this, method.instructions().get(instructionIndices[i]));
+            }
+        }
+        return instructions;
+    }
+
+    /**
+     * Gets a list of instructions within this block.
+     *
+     * @return A list of instructions within this block.
+     */
+    public BasicInstruction[] instructions() {
+        return instructions(true);
+    }
+
+    /**
+     * Gets the index of the given instruction.
+     *
+     * @param insn The instruction to get an index for.
+     * @return The index of the given instruction.
+     */
+    public int indexOf(BasicInstruction insn) {
+        return Arrays.asList(instructions()).indexOf(insn);
+    }
+
+    /**
+     * Gets the instruction at the given index.
+     *
+     * @param index The index to get at.
+     * @return The instruction at the given index.
+     */
+    public BasicInstruction get(int index) {
+        return instructions()[index];
     }
 
     /**
@@ -117,11 +126,11 @@ public class BasicBlock {
         if (successors.size() == 1) {
             return Optional.of(successors.get(0));
         }
-        BasicInstruction endInsn = endInstruction().orElse(null);
+        BasicInstruction endInsn = exit();
         if (endInsn.insn instanceof JumpInsnNode) {
             LabelNode label = ((JumpInsnNode) endInsn.insn).label;
             for (BasicBlock successor : successors) {
-                BasicInstruction startInsn = successor.startInstruction().orElse(null);
+                BasicInstruction startInsn = successor.entry();
                 if (startInsn != null && label == startInsn.insn) {
                     return Optional.of(successor);
                 }
@@ -136,11 +145,11 @@ public class BasicBlock {
      * @return The path that branches to a false value.
      */
     public Optional<BasicBlock> falseBranch() {
-        BasicInstruction endInsn = endInstruction().orElse(null);
+        BasicInstruction endInsn = exit();
         if (endInsn.insn instanceof JumpInsnNode) {
             LabelNode label = ((JumpInsnNode) endInsn.insn).label;
             for (BasicBlock successor : successors) {
-                BasicInstruction startInsn = successor.startInstruction().orElse(null);
+                BasicInstruction startInsn = successor.entry();
                 if (startInsn == null || label != startInsn.insn) {
                     return Optional.of(successor);
                 }
@@ -151,17 +160,21 @@ public class BasicBlock {
 
     private void print(String prepend, String suffix) {
         String result = (prepend + "<" + start + " - " + end + ">\n");
-        for (int i = 0; i < instructions.size(); i++) {
+        BasicInstruction[] insns = instructions();
+        for (int i = 0; i < insns.length; i++) {
             if (i > 0) {
                 result += "\n";
             }
-            result += (prepend + Assembly.toString(instructions.get(i).insn));
+            result += (prepend + Assembly.toString(insns[i].insn));
         }
         result += suffix;
         System.out.println(result);
     }
 
-    private void printBlock(BasicBlock block, String prefix, List<BasicBlock> printed) {
+    private void printBlock(BasicBlock block, String prefix, List<BasicBlock> printed, int current, int max) {
+        if (current >= max) {
+            return;
+        }
         if (!printed.contains(block)) {
             printed.add(block);
             boolean hasSuccessor = false;
@@ -170,14 +183,23 @@ public class BasicBlock {
                     hasSuccessor = true;
                 }
             }
-            block.print(prefix, (hasSuccessor ? " { " : ""));
-            if (hasSuccessor) {
-                block.successors.forEach(succ -> {
-                    if (!printed.contains(succ)) {
-                        System.out.println(prefix + "  {");
-                        printBlock(succ, prefix + "    ", printed);
+            boolean brace = (hasSuccessor && current + 1 < max);
+            block.print(prefix, (brace ? " { " : ""));
+            if (brace) {
+                block.trueBranch().ifPresent(tBranch -> {
+                    if (!printed.contains(tBranch)) {
+                        System.out.println(prefix + "  true: {");
+                        printBlock(tBranch, prefix + "    ", printed, current + 1, max);
+                        System.out.println(prefix + "  }" + (block.successors.size() > 1 ? "," : ""));
+                        printed.add(tBranch);
+                    }
+                });
+                block.falseBranch().ifPresent(fBranch -> {
+                    if (!printed.contains(fBranch)) {
+                        System.out.println(prefix + "  false: {");
+                        printBlock(fBranch, prefix + "    ", printed, current + 1, max);
                         System.out.println(prefix + "  }");
-                        printed.add(succ);
+                        printed.add(fBranch);
                     }
                 });
                 System.out.println(prefix + "}");
@@ -190,70 +212,24 @@ public class BasicBlock {
      *
      * @param printed An empty or pre-filled list used for preventing StackOverflowExceptions
      */
-    public void print(List<BasicBlock> printed) {
-        printBlock(this, "", printed);
+    public void print(List<BasicBlock> printed, int max) {
+        printBlock(this, "", printed, 0, max);
     }
 
     /**
      * Prints the block out in a readable manner.
+     *
+     * @param max The maximum amount of blocks to print out.
+     */
+    public void print(int max) {
+        List<BasicBlock> printed = new ArrayList<>();
+        print(printed, max);
+    }
+
+    /**
+     * Prints the blocks out in a readable manner.
      */
     public void print() {
-        List<BasicBlock> printed = new ArrayList<>();
-        print(printed);
-    }
-
-    private void printId(String prepend, String suffix) {
-        String result = (prepend + id + " <" + start + " - " + end + ">");
-        result += suffix;
-        System.out.println(result);
-    }
-
-    private void printBlockIds(BasicBlock block, String prefix, List<BasicBlock> printed) {
-        if (!printed.contains(block)) {
-            printed.add(block);
-            boolean hasSuccessor = false;
-            for (BasicBlock successor : block.successors) {
-                if (!printed.contains(successor)) {
-                    hasSuccessor = true;
-                }
-            }
-            block.printId(prefix, "");
-            if (hasSuccessor) {
-                block.successors.forEach(succ -> {
-                    if (!printed.contains(succ)) {
-                        printBlockIds(succ, prefix + "  ", printed);
-                        printed.add(succ);
-                    }
-                });
-            }
-        }
-    }
-
-    /**
-     * Prints the block out in a basic and readable manner.
-     *
-     * @param printed An empty or pre-filled list used for preventing StackOverflowExceptions
-     */
-    public void printIds(List<BasicBlock> printed) {
-        printBlockIds(this, "", printed);
-    }
-
-    /**
-     * Prints the block out in a basic and readable manner.
-     */
-    public void printIds() {
-        List<BasicBlock> printed = new ArrayList<>();
-        printIds(printed);
-    }
-
-    protected String toDotDescribe() {
-        StringBuilder builder = new StringBuilder();
-        instructions.forEach(insn -> {
-            if (builder.length() > 0) {
-                builder.append("\n");
-            }
-            builder.append(cfg.dotDescribe(insn.insn));
-        });
-        return builder.toString();
+        print(Integer.MAX_VALUE);
     }
 }

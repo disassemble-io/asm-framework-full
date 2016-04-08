@@ -1,7 +1,7 @@
 package io.disassemble.asm.pattern.nano.flow.data;
 
-import io.disassemble.asm.pattern.nano.PatternInfo;
 import io.disassemble.asm.pattern.nano.AdvancedNanoPattern;
+import io.disassemble.asm.pattern.nano.PatternInfo;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**

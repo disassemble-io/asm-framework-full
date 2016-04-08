@@ -2,8 +2,8 @@ package io.disassemble.asm.program.log;
 
 import io.disassemble.asm.program.BytecodeParser;
 import io.disassemble.asm.program.Identifier;
-import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.program.IdentifierInfo;
+import io.disassemble.asm.util.Assembly;
 
 /**
  * @author Tyler Sedlar

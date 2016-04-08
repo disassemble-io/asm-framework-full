@@ -5,10 +5,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +37,8 @@ public class Debugger implements Opcodes {
                 try {
                     long start = System.nanoTime();
                     cm.cfg().ifPresent(cfg -> {
-                        cfg.execution().print();
+                        cfg.execution().print(1);
+//                        cfg.printBasicBlocks();
                         List<FlowQueryResult> results = cfg.execution().query(
                                 new FlowQuery()
                                         .stmtIncrement()

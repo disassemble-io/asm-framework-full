@@ -4,7 +4,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
  * @author Tyler Sedlar
- * @since 2/26/2016
+ * @since 4/8/16
  */
 public class BasicInstruction {
 
@@ -24,7 +24,7 @@ public class BasicInstruction {
      * @return The BasicInstruction prior to this instruction.
      */
     public BasicInstruction previous() {
-        return (block.instructions.size() > 1 ? block.instructions.get(block.instructions.indexOf(this) - 1) : null);
+        return (block.size() > 1 ? block.get(block.indexOf(this) - 1) : null);
     }
 
     /**
@@ -33,8 +33,8 @@ public class BasicInstruction {
      * @return The BasicInstruction after this instruction.
      */
     public BasicInstruction next() {
-        int idx = block.instructions.indexOf(this);
-        return ((idx + 1) < block.instructions.size() ? block.instructions.get(idx + 1) : null);
+        int idx = block.indexOf(this);
+        return ((idx + 1) < block.size() ? block.get(idx + 1) : null);
     }
 
     /**
@@ -43,7 +43,7 @@ public class BasicInstruction {
      * @return The predecessor block's ending instruction.
      */
     public BasicInstruction parent() {
-        return (block.predecessor != null ? block.predecessor.endInstruction().orElse(null) : null);
+        return (block.predecessor != null ? block.predecessor.exit() : null);
     }
 
     @Override

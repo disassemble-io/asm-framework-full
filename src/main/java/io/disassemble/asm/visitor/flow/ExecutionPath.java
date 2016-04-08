@@ -1,11 +1,9 @@
 package io.disassemble.asm.visitor.flow;
 
+import io.disassemble.asm.util.Assembly;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +17,7 @@ import java.util.stream.Collectors;
  */
 public class ExecutionPath {
 
-    private static final Predicate<BasicInstruction> LABEL_PRED = (b) -> b.insn instanceof LabelNode;
+    private static final Predicate<BasicInstruction> LABEL_PRED = (bi) -> bi.insn instanceof LabelNode;
     private static final Predicate<BasicInstruction> JUMP_PRED = (b) -> b.insn instanceof JumpInsnNode;
 
     private final List<BasicBlock> blocks;
@@ -33,11 +31,11 @@ public class ExecutionPath {
         if (visited.contains(parent)) {
             return;
         }
-        parent.instructions().forEach(insn -> {
+        for (BasicInstruction insn : parent.instructions()) {
             if (predicate.test(insn)) {
                 list.add(insn);
             }
-        });
+        }
         visited.add(parent);
         if (recursive) {
             parent.successors().forEach(block -> findAll(block, predicate, list, true, visited));
@@ -104,8 +102,11 @@ public class ExecutionPath {
                 List<BasicInstruction> branchInstructions = new ArrayList<>();
                 for (BasicInstruction insn : lastMatch) {
                     Consumer<BasicBlock> consumer = (block -> {
-                        branchInstructions.addAll(block.instructions);
-                        block.instructions.forEach(bInsn -> bInsn.previous = insn);
+                        BasicInstruction[] insns = block.instructions();
+                        for (BasicInstruction bInsn : insns) {
+                            bInsn.previous = insn;
+                        }
+                        Collections.addAll(branchInstructions, insns);
                     });
                     if (branchType == FlowQuery.BranchType.TRUE) {
                         insn.block.trueBranch().ifPresent(consumer);
@@ -173,11 +174,10 @@ public class ExecutionPath {
         }
         for (BasicInstruction insn : endings) {
             List<BasicInstruction> hierarchy = new ArrayList<>();
-            hierarchy.add(insn);
-            while (insn.previous != null) {
-                hierarchy.add(insn.previous);
+            do {
+                hierarchy.add(insn);
                 insn = insn.previous;
-            }
+            } while (insn != null);
             Collections.reverse(hierarchy);
             results.add(new FlowQueryResult(query, hierarchy));
         }
@@ -186,30 +186,18 @@ public class ExecutionPath {
 
     /**
      * Prints out the path's BasicBlocks.
+     *
+     * @param max The maximum amount of blocks to print out.
      */
-    public void print() {
+    public void print(int max) {
         List<BasicBlock> printed = new ArrayList<>();
-        blocks.forEach(block -> block.print(printed));
-    }
-
-    public void printIds() {
-        List<BasicBlock> printed = new ArrayList<>();
-        blocks.forEach(block -> block.printIds(printed));
+        blocks.forEach(block -> block.print(printed, max));
     }
 
     /**
-     * Writes the printed data out to the given file.
-     *
-     * @param file The file to write to.
+     * Prints out the path's BasicBlocks.
      */
-    public void writeToFile(File file) {
-        PrintStream out = System.out;
-        try (PrintStream stream = new PrintStream(file)) {
-            System.setOut(stream);
-            print();
-            System.setOut(out);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public void print() {
+        print(Integer.MAX_VALUE);
     }
 }

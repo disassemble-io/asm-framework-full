@@ -28,6 +28,9 @@ public class StringMatcher {
                     case '~': {
                         return threshold.matches(trimmed);
                     }
+                    case '-': {
+                        return !threshold.contains(trimmed);
+                    }
                     default: {
                         return threshold.equals(checker);
                     }
