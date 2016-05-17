@@ -179,7 +179,9 @@ public class ExecutionPath {
                 insn = insn.previous;
             } while (insn != null);
             Collections.reverse(hierarchy);
-            results.add(new FlowQueryResult(query, hierarchy));
+            if (hierarchy.size() == query.predicates().size()) {
+                results.add(new FlowQueryResult(query, hierarchy));
+            }
         }
         return results;
     }
