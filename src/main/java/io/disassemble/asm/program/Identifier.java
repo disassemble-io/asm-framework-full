@@ -48,11 +48,11 @@ public abstract class Identifier extends Thread {
     }
 
     /**
-     * Gets the expected hook count.
+     * Gets the expected values count.
      *
-     * @return The amount of hooks expected.
+     * @return The amount of values expected.
      */
-    public int expectedHookCount() {
+    public int expectedValueCount() {
         int count = 0;
         for (BytecodeParser parser : parsers()) {
             count += parser.expectedValues.size();
@@ -61,16 +61,33 @@ public abstract class Identifier extends Thread {
     }
 
     /**
-     * Gets the found hook count.
+     * Gets the found values count.
      *
-     * @return The amount of hooks found.
+     * @return The amount of values found.
      */
-    public int foundHookCount() {
+    public int foundValueCount() {
         int count = 0;
         for (BytecodeParser parser : parsers()) {
             count += parser.foundValues.size();
         }
         return count;
+    }
+
+    /**
+     * Gets a list of all missing values.
+     *
+     * @return A list of all missing values.
+     */
+    public List<String> missingValues() {
+        List<String> missing = new ArrayList<>();
+        for (BytecodeParser parser : parsers()) {
+            parser.expectedValues.forEach((hook) -> {
+                if (!parser.foundValues.containsKey(hook)) {
+                    missing.add(parser.info().name() + "#" + hook);
+                }
+            });
+        }
+        return missing;
     }
 
     /**
@@ -115,6 +132,11 @@ public abstract class Identifier extends Thread {
         after(classes);
     }
 
+    /**
+     * Gets the IdentifierLogger for this Identifier.
+     *
+     * @return The IdentifierLogger for this Identifier.
+     */
     public IdentifierLogger logger() {
         return logger;
     }
