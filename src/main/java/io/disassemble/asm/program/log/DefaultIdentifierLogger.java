@@ -12,8 +12,8 @@ import io.disassemble.asm.util.Assembly;
 public class DefaultIdentifierLogger extends IdentifierLogger {
 
     @Override
-    public void printHeader(Identifier updater) {
-        IdentifierInfo info = updater.info();
+    public void printHeader(Identifier identifier) {
+        IdentifierInfo info = identifier.info();
         System.out.println("- " + info.name() + " by " + info.author() + " -");
     }
 
@@ -28,7 +28,6 @@ public class DefaultIdentifierLogger extends IdentifierLogger {
     }
 
     @Override
-    public void printFooter(Identifier updater) {
-
+    public void printFooter(Identifier identifier) {
     }
 }

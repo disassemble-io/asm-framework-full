@@ -48,6 +48,32 @@ public abstract class Identifier extends Thread {
     }
 
     /**
+     * Gets the expected hook count.
+     *
+     * @return The amount of hooks expected.
+     */
+    public int expectedHookCount() {
+        int count = 0;
+        for (BytecodeParser parser : parsers()) {
+            count += parser.expectedValues.size();
+        }
+        return count;
+    }
+
+    /**
+     * Gets the found hook count.
+     *
+     * @return The amount of hooks found.
+     */
+    public int foundHookCount() {
+        int count = 0;
+        for (BytecodeParser parser : parsers()) {
+            count += parser.foundValues.size();
+        }
+        return count;
+    }
+
+    /**
      * Sets this Identifier's IdentifierLogger.
      *
      * @param logger The logger to set.
@@ -87,6 +113,10 @@ public abstract class Identifier extends Thread {
         });
         parsers.forEach(parser -> parser.parse(classes));
         after(classes);
+    }
+
+    public IdentifierLogger logger() {
+        return logger;
     }
 
     /**

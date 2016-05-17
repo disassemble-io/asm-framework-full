@@ -3,6 +3,7 @@ package io.disassemble.asm.program.log;
 import io.disassemble.asm.program.BytecodeParser;
 import io.disassemble.asm.program.Identifier;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,17 +12,33 @@ import java.util.List;
  */
 public abstract class IdentifierLogger {
 
-    public abstract void printHeader(Identifier updater);
+    private final List<String> header = new ArrayList<>(), footer = new ArrayList<>();
+
+    public abstract void printHeader(Identifier identifier);
     public abstract void printParser(BytecodeParser parser);
-    public abstract void printFooter(Identifier updater);
+    public abstract void printFooter(Identifier identifier);
 
     public void printParsers(List<BytecodeParser> parsers) {
         parsers.forEach(this::printParser);
     }
 
-    public void print(Identifier updater) {
-        printHeader(updater);
-        printParsers(updater.parsers());
-        printFooter(updater);
+    public void insertToHeader(String string) {
+        header.add(string);
+    }
+
+    public void insertToFooter(String string) {
+        footer.add(string);
+    }
+
+    private void printList(List<String> list) {
+        list.forEach(System.out::println);
+    }
+
+    public void print(Identifier identifier) {
+        printHeader(identifier);
+        printList(header);
+        printParsers(identifier.parsers());
+        printFooter(identifier);
+        printList(footer);
     }
 }
