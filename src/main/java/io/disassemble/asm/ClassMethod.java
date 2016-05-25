@@ -354,7 +354,7 @@ public class ClassMethod {
 
     @Override
     public boolean equals(Object o) {
-        return (o instanceof ClassMethod && ((ClassMethod) o).key().equals(key())) ||
+        return (o instanceof ClassMethod && ((ClassMethod) o).method.equals(method)) ||
                 (o instanceof MethodNode && method.equals(o));
     }
 }
