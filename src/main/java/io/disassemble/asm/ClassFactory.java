@@ -155,6 +155,22 @@ public class ClassFactory {
     }
 
     /**
+     * Adds the given method to this class.
+     *
+     * @param method The method to add.
+     */
+    public void add(ClassMethod method) {
+        if (node.methods.contains(method.method)) {
+            return;
+        }
+        node.methods.add(method.method);
+        ClassMethod[] methods = new ClassMethod[this.methods.length + 1];
+        System.arraycopy(this.methods, 0, methods, 0, this.methods.length);
+        methods[methods.length - 1] = method;
+        this.methods = methods;
+    }
+
+    /**
      * Calls ClassNode#accept with the given visitor.
      *
      * @param cfv The visitor to call.
