@@ -136,7 +136,7 @@ public class JarArchive {
             for (Map.Entry<String, ClassFactory> entry : build().entrySet()) {
                 ClassFactory factory = entry.getValue();
                 output.putNextEntry(new JarEntry(factory.name().replaceAll("\\.", "/") + ".class"));
-                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
                 factory.node.accept(writer);
                 output.write(writer.toByteArray());
                 output.closeEntry();
