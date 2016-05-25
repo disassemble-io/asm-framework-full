@@ -130,13 +130,14 @@ public class JarArchive {
      * Writes the classes to the given file.
      *
      * @param target The file to write to.
+     * @param args The ClassWriter args to use.
      */
-    public void write(File target) {
+    public void write(File target, int args) {
         try (JarOutputStream output = new JarOutputStream(new FileOutputStream(target))) {
             for (Map.Entry<String, ClassFactory> entry : build().entrySet()) {
                 ClassFactory factory = entry.getValue();
                 output.putNextEntry(new JarEntry(factory.name().replaceAll("\\.", "/") + ".class"));
-                ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+                ClassWriter writer = new ClassWriter(args);
                 factory.node.accept(writer);
                 output.write(writer.toByteArray());
                 output.closeEntry();
@@ -154,9 +155,18 @@ public class JarArchive {
 
     /**
      * Writes the classes back out to itself.
+     * 
+     * @param args The ClassWriter arguments to use.
+     */
+    public void write(int args) {
+        write(file, args);
+    }
+    
+    /**
+     * Writes the classes back out to itself.
      */
     public void write() {
-        write(file);
+       write(file, ClassWriter.COMPUTE_MAXS); 
     }
 
     /**
