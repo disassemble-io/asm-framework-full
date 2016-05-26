@@ -8,7 +8,9 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -32,6 +34,25 @@ public class Assembly implements Opcodes {
     }
 
     /**
+     * Gets a list of instructions matching the given predicate.
+     *
+     * @param list The list of instructions.
+     * @param predicate The predicate to match.
+     * @return A list of instructions matching the given predicate.
+     */
+    @SuppressWarnings("unchecked")
+    public static <E extends AbstractInsnNode> List<E> findAll(InsnList list, Predicate<AbstractInsnNode> predicate) {
+        List<E> results = new ArrayList<>();
+        AbstractInsnNode[] instructions = list.toArray();
+        for (AbstractInsnNode insn : instructions) {
+            if (predicate.test(insn)) {
+                results.add((E) insn);
+            }
+        }
+        return results;
+    }
+
+    /**
      * Checks how many instructions from the given list match the given predicate.
      *
      * @param list      The list of instructions.
@@ -39,14 +60,7 @@ public class Assembly implements Opcodes {
      * @return The amount of instructions from the given list matching the given predicate.
      */
     public static int count(InsnList list, Predicate<AbstractInsnNode> predicate) {
-        int count = 0;
-        AbstractInsnNode[] instructions = list.toArray();
-        for (AbstractInsnNode insn : instructions) {
-            if (predicate.test(insn)) {
-                count++;
-            }
-        }
-        return count;
+        return findAll(list, predicate).size();
     }
 
     /**
