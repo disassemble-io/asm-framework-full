@@ -24,7 +24,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 /**
- * @author Tyler Sedlar
+ * @author Tyler Sedlar, Christopher Carpenter
  * @since 2/12/16
  */
 public class JarArchive {
