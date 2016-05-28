@@ -1,5 +1,6 @@
 package io.disassemble.asm.util;
 
+import com.linkedin.parseq.MultiException;
 import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassFactoryVisitor;
 import io.disassemble.asm.ClassMethodVisitor;
@@ -17,6 +18,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -163,25 +165,45 @@ public class JarArchive {
         }
         try (JarFile jar = new JarFile(file)) {
             ArrayList<JarEntry> entries = Collections.list(jar.entries());
-            //TODO size
-            ConcurrentHashMap<String, InputStream> entryStreams = new ConcurrentHashMap<>();
+            ConcurrentHashMap<String, InputStream> entryStreams = new ConcurrentHashMap<>(entries.size());
             for (JarEntry entry : entries) {
                 entryStreams.put(entry.getName(), jar.getInputStream(entry));
             }
-            //TODO verify this is proper parallelism threshold
-            //https://github.com/TSedlar/Sedlar-Bytecode/commit/15c256e0e4256da2a961689092fd9ec37528ec39#diff-a6f2dfa4ed5757affb73b1feb6832181R95
+            /*
+            We're going to catch all IOExceptions, add them to a list, and throw a MultiException afterwards,
+            that way nothing gets interrupted and no errors are missed.
+             */
+            CopyOnWriteArrayList<IOException> forEachExceptions = new CopyOnWriteArrayList<>();
+            //Parallelism threshold is the amount of elements required before operations are performed in parallel.
             entryStreams.forEach(parallel ? 1 : Long.MAX_VALUE, (name, input) -> {
-                //TODO figure out what to do about the exception handling...
-                if (name.endsWith(".class")) {
-                    ClassNode cn = new ClassNode();
-                    ClassReader reader = new ClassReader(readInputStream(input));
-                    reader.accept(cn, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-                    classes.put(name.replace(".class", ""), new ClassFactory(cn));
-                } else {
-                    resources.put(name, readInputStream(input));
+                try {
+                    if (name.endsWith(".class")) {
+                        ClassNode cn = new ClassNode();
+                        ClassReader reader = new ClassReader(readInputStream(input));
+                        reader.accept(cn, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+                        classes.put(name.replace(".class", ""), new ClassFactory(cn));
+                    } else {
+                        resources.put(name, readInputStream(input));
+                    }
+                } catch (IOException ioe) {
+                    forEachExceptions.add(ioe);
+                } finally {
+                    try {
+                        input.close();
+                    } catch (IOException ioe) {
+                        forEachExceptions.add(ioe);
+                    }
                 }
-                input.close();
             });
+            if (!forEachExceptions.isEmpty()) {
+                if (forEachExceptions.size() == 1) {
+                    throw forEachExceptions.get(0);
+                } else {
+                    throw new IOException(
+                            forEachExceptions.size() + " exceptions occurred while building the class and resource maps.",
+                            new MultiException(forEachExceptions));
+                }
+            }
         }
         built = true;
         return System.currentTimeMillis() - time;
@@ -194,7 +216,7 @@ public class JarArchive {
      * @param args   The ClassWriter args to use.
      */
     public void write(File target, int args) {
-        if(!built()){
+        if (!built()) {
             throw new IllegalStateException("You cannot write a JarArchive until it has been built.");
         }
         try (JarOutputStream output = new JarOutputStream(new FileOutputStream(target))) {
