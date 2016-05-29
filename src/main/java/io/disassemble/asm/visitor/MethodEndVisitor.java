@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.objectweb.asm.Opcodes.*;
+
 /**
  * @author Tyler Sedlar
  * @since 1/13/2016

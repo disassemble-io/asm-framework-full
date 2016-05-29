@@ -4,19 +4,19 @@ import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Query;
 import io.disassemble.asm.util.StringMatcher;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static org.objectweb.asm.Opcodes.*;
+
 /**
  * @author Tyler Sedlar
  * @since 2/12/2016
  */
-public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implements Opcodes {
-
+public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
     public static final int DEFAULT_MAX_DISTANCE = 10;
     private final List<Predicate<BasicInstruction>> predicates = new ArrayList<>();
     private final List<Integer> branches = new ArrayList<>();
@@ -124,8 +124,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtIf() {
         predicates.add(insn -> (insn.insn.getOpcode() >= IFEQ &&
-            insn.insn.getOpcode() <= IF_ACMPNE) ||
-            (insn.insn.getOpcode() >= IFNULL && insn.insn.getOpcode() <= IFNONNULL));
+                insn.insn.getOpcode() <= IF_ACMPNE) ||
+                (insn.insn.getOpcode() >= IFNULL && insn.insn.getOpcode() <= IFNONNULL));
         return this;
     }
 
@@ -141,8 +141,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtStore(Predicate<Integer> var) {
         predicates.add(insn -> (insn.insn.getOpcode() >= ISTORE &&
-            insn.insn.getOpcode() <= SASTORE) &&
-            (var == null || var.test(((VarInsnNode) insn.insn).var)));
+                insn.insn.getOpcode() <= SASTORE) &&
+                (var == null || var.test(((VarInsnNode) insn.insn).var)));
         return this;
     }
 
@@ -171,8 +171,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtLoad(Predicate<Integer> var) {
         predicates.add(insn -> (insn.insn.getOpcode() >= ILOAD &&
-            insn.insn.getOpcode() <= SALOAD) &&
-            (var == null || var.test(((VarInsnNode) insn.insn).var)));
+                insn.insn.getOpcode() <= SALOAD) &&
+                (var == null || var.test(((VarInsnNode) insn.insn).var)));
         return this;
     }
 
@@ -206,7 +206,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtType(Supplier<String> type) {
         predicates.add(insn -> (insn.insn instanceof TypeInsnNode &&
-            (type == null || StringMatcher.matches(type.get(), ((TypeInsnNode) insn.insn).desc))));
+                (type == null || StringMatcher.matches(type.get(), ((TypeInsnNode) insn.insn).desc))));
         return this;
     }
 
@@ -224,7 +224,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
             if (insn.insn.getOpcode() == opcode) {
                 FieldInsnNode fin = (FieldInsnNode) insn.insn;
                 return ((owner == null || owner.get() == null || StringMatcher.matches(owner.get(), fin.owner)) &&
-                    (desc == null || desc.get() == null || StringMatcher.matches(desc.get(), fin.desc)));
+                        (desc == null || desc.get() == null || StringMatcher.matches(desc.get(), fin.desc)));
             }
             return false;
         };
@@ -283,7 +283,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
             if (insn.insn.getOpcode() == opcode) {
                 MethodInsnNode min = (MethodInsnNode) insn.insn;
                 return ((owner == null || owner.get() == null || StringMatcher.matches(owner.get(), min.owner)) &&
-                    (desc == null || desc.get() == null || StringMatcher.matches(desc.get(), min.desc)));
+                        (desc == null || desc.get() == null || StringMatcher.matches(desc.get(), min.desc)));
             }
             return false;
         };
@@ -345,8 +345,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtPush(Predicate<Integer> operand) {
         predicates.add(insn -> (insn.insn.getOpcode() == BIPUSH ||
-            insn.insn.getOpcode() == SIPUSH) &&
-            (operand == null || operand.test(((IntInsnNode) insn.insn).operand)));
+                insn.insn.getOpcode() == SIPUSH) &&
+                (operand == null || operand.test(((IntInsnNode) insn.insn).operand)));
         return this;
     }
 
@@ -367,8 +367,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtStringConstant(Supplier<String> constant) {
         predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-            (constant == null || constant.get() == null ||
-                constant.get().equals(((LdcInsnNode) insn.insn).cst))));
+                (constant == null || constant.get() == null ||
+                        constant.get().equals(((LdcInsnNode) insn.insn).cst))));
         return this;
     }
 
@@ -380,8 +380,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtIntConstant(Supplier<Integer> constant) {
         predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-            (constant == null || constant.get() == null ||
-                constant.get() == ((LdcInsnNode) insn.insn).cst)));
+                (constant == null || constant.get() == null ||
+                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -393,8 +393,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtLongConstant(Supplier<Long> constant) {
         predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-            (constant == null || constant.get() == null ||
-                constant.get() == ((LdcInsnNode) insn.insn).cst)));
+                (constant == null || constant.get() == null ||
+                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -406,8 +406,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtDoubleConstant(Supplier<Double> constant) {
         predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-            (constant == null || constant.get() == null ||
-                constant.get() == ((LdcInsnNode) insn.insn).cst)));
+                (constant == null || constant.get() == null ||
+                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -419,8 +419,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      */
     public FlowQuery stmtShortConstant(Supplier<Short> constant) {
         predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-            (constant == null || constant.get() == null ||
-                constant.get() == ((LdcInsnNode) insn.insn).cst)));
+                (constant == null || constant.get() == null ||
+                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -649,7 +649,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      * Checks whether there is a branch at the given index.
      *
      * @param index The index to check for a branch at.
-     * @return <t>true</t> if there is a branch at the given index, otherwise <t>false</t>.
+     * @return true if there is a branch at the given index, otherwise false.
      */
     public boolean branchesAt(int index) {
         return branches.contains(index);
@@ -731,7 +731,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      * Checks whether there has been a loop query at the given index.
      *
      * @param index The index to check at.
-     * @return <t>true</t> if there is a loop query at the given index, otherwise <t>false</t>.
+     * @return true if there is a loop query at the given index, otherwise false.
      */
     public boolean loopsAt(int index) {
         return loops.contains(index);
@@ -741,7 +741,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> implemen
      * Checks whether there has been a restricted-loop query at the given index.
      *
      * @param index The index to check at.
-     * @return <t>true</t> if there is a restricted-loop query at the given index, otherwise <t>false</t>.
+     * @return true if there is a restricted-loop query at the given index, otherwise false.
      */
     public boolean doesNotLoopAt(int index) {
         return restrictedLoops.contains(index);

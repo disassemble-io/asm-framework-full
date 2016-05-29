@@ -18,17 +18,18 @@
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-debug-all</artifactId>
-            <version>5.1</version>
+            <version>[5.1,)</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>[4.12,)</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.linkedin.parseq</groupId>
             <artifactId>parseq</artifactId>
-            <version>2.3.5</version>
+            <version>[2.3.5,)</version>
         </dependency>
     </dependencies>
 
@@ -41,6 +42,30 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>versions-maven-plugin</artifactId>
                         <version>2.2</version>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.10.3</version>
+                        <configuration>
+                            <show>public</show>
+                            <nosince>true</nosince>
+                            <failOnError>false</failOnError>
+                            <quiet>true</quiet>
+                            <links>
+                                <link>http://asm.ow2.org/asm50/javadoc/user</link>
+                                <link>https://linkedin.github.io/parseq/javadoc/latest</link>
+                                <link>http://junit.org/junit4/javadoc/4.12</link>
+                            </links>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

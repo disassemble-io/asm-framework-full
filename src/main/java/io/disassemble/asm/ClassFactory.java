@@ -78,7 +78,7 @@ public class ClassFactory {
     /**
      * Checks whether this class has an owner or not.
      *
-     * @return <t>true</t> if this class does not have an owner, otherwise <t>false</t>.
+     * @return true if this class does not have an owner, otherwise false.
      */
     public boolean ownerless() {
         return superName().equals("java/lang/Object");

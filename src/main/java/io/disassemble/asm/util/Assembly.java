@@ -4,7 +4,6 @@ import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassField;
 import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.Label;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
 
@@ -20,7 +19,9 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  * @author Tyler Sedlar
  * @since 2/1/16
  */
-public class Assembly implements Opcodes {
+public class Assembly {
+    private Assembly() {
+    }
 
     /**
      * Creates a predicate that matches any of the given opcodes.
@@ -36,8 +37,9 @@ public class Assembly implements Opcodes {
     /**
      * Gets a list of instructions matching the given predicate.
      *
-     * @param list The list of instructions.
+     * @param list      The list of instructions.
      * @param predicate The predicate to match.
+     * @param <E>       A subclass of {@code AbstractInsnNode}
      * @return A list of instructions matching the given predicate.
      */
     @SuppressWarnings("unchecked")
@@ -68,6 +70,7 @@ public class Assembly implements Opcodes {
      *
      * @param list      The list of instructions.
      * @param predicate The predicate to match.
+     * @param <E>       A subclass of {@code AbstractInsnNode}
      * @return The first occurrence of an instruction matching the given predicate.
      */
     @SuppressWarnings("unchecked")
@@ -87,6 +90,7 @@ public class Assembly implements Opcodes {
      * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
      * @param dist      The maximum distance to search.
+     * @param <E>       A subclass of {@code AbstractInsnNode}
      * @return The first occurrence of an instruction matching the given predicate, occurring after the given instruction.
      */
     @SuppressWarnings("unchecked")
@@ -106,6 +110,7 @@ public class Assembly implements Opcodes {
      *
      * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
+     * @param <E>       A subclass of {@code AbstractInsnNode}
      * @return The first occurrence of an instruction matching the given predicate, occurring after the given instruction.
      */
     public static <E extends AbstractInsnNode> E findNext(AbstractInsnNode insn, Predicate<AbstractInsnNode> predicate) {
@@ -118,6 +123,7 @@ public class Assembly implements Opcodes {
      * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
      * @param dist      The maximum distance to search.
+     * @param <E>       A subclass of {@code AbstractInsnNode}
      * @return The first occurrence of an instruction matching the given predicate, occurring before the given instruction.
      */
     @SuppressWarnings("unchecked")
@@ -137,6 +143,7 @@ public class Assembly implements Opcodes {
      *
      * @param insn      The instruction to search after.
      * @param predicate The predicate to match.
+     * @param <E>       A subclass of {@code AbstractInsnNode}
      * @return The first occurrence of an instruction matching the given predicate, occurring before the given instruction.
      */
     public static <E extends AbstractInsnNode> E findPrevious(AbstractInsnNode insn,
@@ -178,7 +185,7 @@ public class Assembly implements Opcodes {
                             realOwner = classes.get(realOwner.superName());
                         }
                         if (realOwner != null && realOwner.name().equals(fn.owner.name()) &&
-                            fin.name.equals(fn.field.name)) {
+                                fin.name.equals(fn.field.name)) {
                             fin.name = newName;
                         }
                     }
@@ -263,7 +270,7 @@ public class Assembly implements Opcodes {
      *
      * @param insn1 The first instruction to compare.
      * @param insn2 The second instruction to compare.
-     * @return <t>true</t> if the instructions are similar, otherwise <t>false</t>.
+     * @return true if the instructions are similar, otherwise false.
      */
     public static boolean instructionsEqual(AbstractInsnNode insn1, AbstractInsnNode insn2) {
         if (insn1 == insn2) {
@@ -303,7 +310,7 @@ public class Assembly implements Opcodes {
             case INVOKE_DYNAMIC_INSN: {
                 InvokeDynamicInsnNode idin1 = (InvokeDynamicInsnNode) insn1, idin2 = (InvokeDynamicInsnNode) insn2;
                 return idin1.bsm.equals(idin2.bsm) && Arrays.equals(idin1.bsmArgs, idin2.bsmArgs) &&
-                    idin1.desc.equals(idin2.desc) && idin1.name.equals(idin2.name);
+                        idin1.desc.equals(idin2.desc) && idin1.name.equals(idin2.name);
             }
             case JUMP_INSN: {
                 JumpInsnNode jin1 = (JumpInsnNode) insn1, jin2 = (JumpInsnNode) insn2;
@@ -312,7 +319,7 @@ public class Assembly implements Opcodes {
             case LABEL: {
                 Label label1 = ((LabelNode) insn1).getLabel(), label2 = ((LabelNode) insn2).getLabel();
                 return label1 == null ? label2 == null : label1.info == null ? label2.info == null :
-                    label1.info.equals(label2.info);
+                        label1.info.equals(label2.info);
             }
             case LDC_INSN: {
                 LdcInsnNode lin1 = (LdcInsnNode) insn1, lin2 = (LdcInsnNode) insn2;
@@ -369,7 +376,7 @@ public class Assembly implements Opcodes {
      *
      * @param insns  The first instruction array to compare.
      * @param insns2 The second instruction array to compare.
-     * @return <t>true</t> if the given instruction arrays are similar, otherwise <t>false</t>.
+     * @return true if the given instruction arrays are similar, otherwise false.
      */
     public static boolean instructionsEqual(AbstractInsnNode[] insns, AbstractInsnNode[] insns2) {
         if (insns == insns2) {

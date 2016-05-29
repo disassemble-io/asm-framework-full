@@ -1,6 +1,8 @@
 package io.disassemble.asm.util;
 
 /**
+ * Uses Combinatorics to calculate alphabetical strings to and from integers.
+ *
  * @author Tyler Sedlar
  * @since 10/31/14
  */

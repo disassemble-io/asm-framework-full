@@ -22,7 +22,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Tyler Sedlar
@@ -132,7 +132,7 @@ public class ClassMethod {
     /**
      * Checks whether this method is non-static.
      *
-     * @return <t>true</t> if this method is non-static, otherwise <t>false</t>.
+     * @return true if this method is non-static, otherwise false.
      */
     public boolean local() {
         return (access() & ACC_STATIC) == 0;
@@ -209,7 +209,7 @@ public class ClassMethod {
     /**
      * Checks whether this method returns a desc of the class it's in.
      *
-     * @return <t>true</t> if this method returns a desc of the class it's in, otherwise <t>false</t>.
+     * @return true if this method returns a desc of the class it's in, otherwise false.
      */
     public boolean chained() {
         return local() && desc().endsWith(")L" + owner.name() + ";");
@@ -219,7 +219,7 @@ public class ClassMethod {
      * Checks whether this method calls a method matching the given predicate or not.
      *
      * @param predicate The predicate to match.
-     * @return <t>true</t> if this method calls a method matching the given predicate, otherwise <t>false</t>.
+     * @return true if this method calls a method matching the given predicate, otherwise false.
      */
     public boolean calls(Predicate<MethodInsnNode> predicate) {
         return count(insn -> insn instanceof MethodInsnNode && predicate.test((MethodInsnNode) insn)) > 0;
@@ -257,7 +257,7 @@ public class ClassMethod {
      * Checks whether all the given simple nano-patterns are used in this method.
      *
      * @param patterns The patterns to match.
-     * @return <t>true</t> if all the given simple nano-patterns are used in this method, otherwise <t>false</t>.
+     * @return true if all the given simple nano-patterns are used in this method, otherwise false.
      */
     public boolean hasSimpleNanoPatterns(String... patterns) {
         List<String> patternList = findSimpleNanoPatterns();
@@ -304,7 +304,7 @@ public class ClassMethod {
      * Checks whether all the given advanced nano-patterns are used in this method.
      *
      * @param patterns The patterns to match.
-     * @return <t>true</t> if all the given advanced nano-patterns are used in this method, otherwise <t>false</t>.
+     * @return true if all the given advanced nano-patterns are used in this method, otherwise false.
      */
     public boolean hasAdvancedNanoPatterns(String... patterns) {
         List<String> patternList = findAdvancedNanoPatterns();

@@ -3,7 +3,6 @@ import io.disassemble.asm.visitor.flow.FlowQuery;
 import io.disassemble.asm.visitor.flow.FlowQueryResult;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.objectweb.asm.Opcodes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +12,7 @@ import java.util.Map;
  * @author Tyler Sedlar
  * @since 2/1/16
  */
-public class Debugger implements Opcodes {
+public class Debugger {
 
     private static final String TEST_CLASS_NAME = "Sample";
 
@@ -22,8 +21,8 @@ public class Debugger implements Opcodes {
     @BeforeClass
     public static void setup() {
         ClassScanner.scanClassPath(
-            cn -> cn.name.equals(TEST_CLASS_NAME),
-            cm -> methods.put(cm.key(), cm)
+                cn -> cn.name.equals(TEST_CLASS_NAME),
+                cm -> methods.put(cm.key(), cm)
         );
     }
 
