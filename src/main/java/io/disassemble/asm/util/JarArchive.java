@@ -160,6 +160,7 @@ public class JarArchive {
      * Builds the class and resource maps using parallelism.
      *
      * @return The amount of milliseconds it took to build the classes and resources
+     * @throws IOException if an error occurs while locating, reading, or parsing the file
      */
     public long build() throws IOException {
         return build(true);
@@ -170,6 +171,7 @@ public class JarArchive {
      *
      * @param parallel a boolean that decides if the classes and resources should be built in parallel
      * @return The amount of milliseconds it took to build the classes and resources
+     * @throws IOException if an error occurs while locating, reading, or parsing the file
      */
     public long build(boolean parallel) throws IOException {
         return build(parallel ? 1 : Long.MAX_VALUE);
@@ -180,6 +182,7 @@ public class JarArchive {
      *
      * @param parallelismThreshold The parallelismThreshold to be used when parsing the file entries
      * @return The amount of milliseconds it took to build the classes and resources
+     * @throws IOException if an error occurs while locating, reading, or parsing the file
      */
     public long build(long parallelismThreshold) throws IOException {
         long time = System.currentTimeMillis();
@@ -237,6 +240,7 @@ public class JarArchive {
      *
      * @param destinationFile The file to write to.
      * @param writerFlags     The ClassWriter flags to use.
+     * @throws IOException If an error occurs while manipulating an output stream
      */
     public void write(File destinationFile, int writerFlags) throws IOException {
         if (!built()) {
@@ -264,6 +268,7 @@ public class JarArchive {
      * Writes the classes and resources back to the original file using the specified ClassWriter flags.
      *
      * @param writerFlags The ClassWriter flags to use.
+     * @throws IOException If an error occurs while manipulating an output stream
      */
     public void write(int writerFlags) throws IOException {
         write(file, writerFlags);
@@ -271,6 +276,8 @@ public class JarArchive {
 
     /**
      * Writes the classes and resources back to the original file using the ClassWriter flag COMPUTE_MAXS.
+     *
+     * @throws IOException If an error occurs while manipulating an output stream
      */
     public void write() throws IOException {
         write(file, ClassWriter.COMPUTE_MAXS);

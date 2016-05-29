@@ -1,6 +1,5 @@
 package io.disassemble.asm.visitor.stack;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.objectweb.asm.tree.analysis.BasicInterpreter;
@@ -15,7 +14,7 @@ import java.util.Map;
  * @author Tyler Sedlar
  * @since 3/9/15
  */
-public class StackInterpreter extends BasicInterpreter implements Opcodes {
+public class StackInterpreter extends BasicInterpreter {
 
     public final Map<BasicValue, List<AbstractInsnNode>> values = new HashMap<>();
 

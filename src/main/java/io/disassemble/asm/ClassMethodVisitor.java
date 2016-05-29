@@ -3,21 +3,22 @@ package io.disassemble.asm;
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Tyler Sedlar
  * @since 3/8/15
  */
-public class ClassMethodVisitor extends MethodVisitor implements Opcodes {
+public class ClassMethodVisitor extends MethodVisitor {
 
     protected ClassMethod method;
     private int idx = 0;
     private boolean locked = false;
 
     public ClassMethodVisitor() {
-        super(Opcodes.ASM5, null);
+        super(ASM5, null);
     }
 
     private AbstractInsnNode current() {
@@ -50,7 +51,7 @@ public class ClassMethodVisitor extends MethodVisitor implements Opcodes {
     /**
      * Checks whether this visitor is locked or not.
      *
-     * @return <t>true</t> if this visitor is locked, otherwise <t>false</t>.
+     * @return true if this visitor is locked, otherwise false.
      */
     public boolean locked() {
         return locked;

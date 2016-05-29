@@ -2,7 +2,6 @@ package io.disassemble.asm.pattern.nano.composite;
 
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.pattern.nano.NanoPatternTypes;
-import org.objectweb.asm.Opcodes;
 
 import java.util.List;
 
@@ -10,7 +9,7 @@ import java.util.List;
  * @author Tyler Sedlar
  * @since 2/2/16
  */
-public abstract class CompositePattern implements Opcodes, NanoPatternTypes {
+public abstract class CompositePattern implements NanoPatternTypes {
 
     public abstract String[] simples();
 

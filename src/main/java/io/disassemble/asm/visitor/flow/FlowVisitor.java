@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.objectweb.asm.Opcodes.*;
+
 /**
  * @author Tyler Sedlar
  * @since 4/7/2016
@@ -16,8 +18,8 @@ import java.util.Map;
 public class FlowVisitor extends ClassMethodVisitor {
 
     private final Map<Integer, List<Integer>> successors = new HashMap<>();
-    private List<Integer> visited = new ArrayList<>();
     protected Map<Integer, BasicBlock> blocks = new HashMap<>();
+    private List<Integer> visited = new ArrayList<>();
     private List<Integer> currentInstructions = new ArrayList<>();
 
     private int blockStart, blockEnd;
