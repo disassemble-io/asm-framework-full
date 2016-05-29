@@ -24,7 +24,9 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 /**
- * @author Tyler Sedlar, Christopher Carpenter
+ * @author Tyler Sedlar
+ * @author Christopher Carpenter
+ * @version 1.1.0
  * @since 2/12/16
  */
 public class JarArchive {
@@ -33,47 +35,13 @@ public class JarArchive {
     private final File file;
     private boolean built = false;
 
+    /**
+     * Constructs a {@code JarArchive} using the specified input file.
+     *
+     * @param file the {@code File} to build the JarArchive from.
+     */
     public JarArchive(File file) {
         this.file = file;
-    }
-
-    public ConcurrentMap<String, ClassFactory> classes() {
-        if (!built) {
-            throw new IllegalStateException("The JarArchive must be built before its classes can be retrieved.");
-        }
-        return classes;
-    }
-
-    public ConcurrentMap<String, byte[]> resources() {
-        if (!built) {
-            throw new IllegalStateException("The JarArchive must be built before its resources can be retrieved.");
-        }
-        return resources;
-    }
-
-    /**
-     * Dispatches the given visitor to all the loaded classes.
-     *
-     * @param cfv The visitor to dispatch.
-     */
-    public void dispatch(ClassFactoryVisitor cfv) {
-        for (ClassFactory factory : classes.values()) {
-            factory.accept(cfv);
-        }
-    }
-
-    /**
-     * Dispatches the given visitor to all the loaded methods.
-     *
-     * @param cmv The visitor to dispatch.
-     */
-    public void dispatch(ClassMethodVisitor cmv) {
-        for (ClassFactory factory : classes.values()) {
-            factory.dispatch(cmv);
-            if (cmv.locked()) {
-                return;
-            }
-        }
     }
 
     /**
@@ -82,7 +50,7 @@ public class JarArchive {
      * @param in The InputStream to be read
      * @return a non-null {@code byte[]} containing the results the now closed <@code InputStream>
      */
-    private byte[] readInputStream(InputStream in) throws IOException {
+    private static byte[] readInputStream(InputStream in) throws IOException {
         try (ReadableByteChannel inChannel = Channels.newChannel(in)) {
             //ByteArrayOutputStreams don't need to be closed.
             /*
@@ -125,6 +93,51 @@ public class JarArchive {
         }
     }
 
+    public ConcurrentMap<String, ClassFactory> classes() {
+        if (!built()) {
+            throw new IllegalStateException("The JarArchive must be built before its classes can be retrieved.");
+        }
+        return classes;
+    }
+
+    public ConcurrentMap<String, byte[]> resources() {
+        if (!built()) {
+            throw new IllegalStateException("The JarArchive must be built before its resources can be retrieved.");
+        }
+        return resources;
+    }
+
+    /**
+     * Dispatches the given visitor to all the loaded classes.
+     *
+     * @param cfv The visitor to dispatch.
+     */
+    public void dispatch(ClassFactoryVisitor cfv) {
+        if (!built()) {
+            throw new IllegalStateException("The JarArchive must be built before visitors can be dispatched.");
+        }
+        for (ClassFactory factory : classes.values()) {
+            factory.accept(cfv);
+        }
+    }
+
+    /**
+     * Dispatches the given visitor to all the loaded methods.
+     *
+     * @param cmv The visitor to dispatch.
+     */
+    public void dispatch(ClassMethodVisitor cmv) {
+        if (!built()) {
+            throw new IllegalStateException("The JarArchive must be built before visitors can be dispatched.");
+        }
+        for (ClassFactory factory : classes.values()) {
+            factory.dispatch(cmv);
+            if (cmv.locked()) {
+                return;
+            }
+        }
+    }
+
     /**
      * The jar archive file
      *
@@ -144,21 +157,31 @@ public class JarArchive {
     }
 
     /**
-     * Builds the class and resource maps.
+     * Builds the class and resource maps using parallelism.
      *
-     * @return The amount of milliseconds it took to build.
+     * @return The amount of milliseconds it took to build the classes and resources
      */
     public long build() throws IOException {
         return build(true);
     }
 
     /**
-     * Builds the class and resource maps.
+     * Builds the class and resource maps using a parallelismThreshold of 1 if {@code parallel}, otherwise Long.MAX_VALUE
      *
      * @param parallel a boolean that decides if the classes and resources should be built in parallel
-     * @return The amount of milliseconds it took to build.
+     * @return The amount of milliseconds it took to build the classes and resources
      */
     public long build(boolean parallel) throws IOException {
+        return build(parallel ? 1 : Long.MAX_VALUE);
+    }
+
+    /**
+     * Builds the class and resource maps using the specified {@code parallelismThreshold}
+     *
+     * @param parallelismThreshold The parallelismThreshold to be used when parsing the file entries
+     * @return The amount of milliseconds it took to build the classes and resources
+     */
+    public long build(long parallelismThreshold) throws IOException {
         long time = System.currentTimeMillis();
         if (built()) {
             throw new IllegalStateException("The JarArchive cannot be built more than once.");
@@ -175,7 +198,7 @@ public class JarArchive {
              */
             CopyOnWriteArrayList<IOException> forEachExceptions = new CopyOnWriteArrayList<>();
             //Parallelism threshold is the amount of elements required before operations are performed in parallel.
-            entryStreams.forEach(parallel ? 1 : Long.MAX_VALUE, (name, input) -> {
+            entryStreams.forEach(parallelismThreshold, (name, input) -> {
                 try {
                     if (name.endsWith(".class")) {
                         ClassNode cn = new ClassNode();
@@ -210,20 +233,20 @@ public class JarArchive {
     }
 
     /**
-     * Writes the classes to the given file.
+     * Writes the classes and resources to the specified file using the supplied ClassWriter flags.
      *
-     * @param target The file to write to.
-     * @param args   The ClassWriter args to use.
+     * @param destinationFile The file to write to.
+     * @param writerFlags     The ClassWriter flags to use.
      */
-    public void write(File target, int args) {
+    public void write(File destinationFile, int writerFlags) throws IOException {
         if (!built()) {
             throw new IllegalStateException("You cannot write a JarArchive until it has been built.");
         }
-        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(target))) {
+        try (JarOutputStream output = new JarOutputStream(new FileOutputStream(destinationFile))) {
             for (Map.Entry<String, ClassFactory> entry : classes.entrySet()) {
                 ClassFactory factory = entry.getValue();
                 output.putNextEntry(new JarEntry(factory.name().replaceAll("\\.", "/") + ".class"));
-                ClassWriter writer = new ClassWriter(args);
+                ClassWriter writer = new ClassWriter(writerFlags);
                 factory.node.accept(writer);
                 output.write(writer.toByteArray());
                 output.closeEntry();
@@ -234,32 +257,31 @@ public class JarArchive {
                 output.closeEntry();
             }
             output.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
     /**
-     * Writes the classes back out to itself.
+     * Writes the classes and resources back to the original file using the specified ClassWriter flags.
      *
-     * @param args The ClassWriter arguments to use.
+     * @param writerFlags The ClassWriter flags to use.
      */
-    public void write(int args) {
-        write(file, args);
+    public void write(int writerFlags) throws IOException {
+        write(file, writerFlags);
     }
 
     /**
-     * Writes the classes back out to itself.
+     * Writes the classes and resources back to the original file using the ClassWriter flag COMPUTE_MAXS.
      */
-    public void write() {
+    public void write() throws IOException {
         write(file, ClassWriter.COMPUTE_MAXS);
     }
 
     /**
-     * Clears the memory of the classes and resources.
+     * Clears the contents of the classes and resources and resets {@code built} to false.
      */
-    public void clear() {
+    public void reset() {
         classes.clear();
         resources.clear();
+        built = false;
     }
 }
