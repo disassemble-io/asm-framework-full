@@ -1,8 +1,7 @@
 language: java
 jdk:
   - oraclejdk8
-script:
- - mvn test
- - mvn javadoc:jar
+install: mvn install -Dmaven.javadoc.skip=false
+script: mvn test javadoc:jar
 after_success:
 after_failure:
