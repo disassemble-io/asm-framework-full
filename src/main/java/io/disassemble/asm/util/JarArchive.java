@@ -193,6 +193,7 @@ public class JarArchive {
             ArrayList<JarEntry> entries = Collections.list(jar.entries());
             ConcurrentHashMap<String, InputStream> entryStreams = new ConcurrentHashMap<>(entries.size());
             for (JarEntry entry : entries) {
+                //getInputStream(Entry) is synronized so can't be made to run in parallel
                 entryStreams.put(entry.getName(), jar.getInputStream(entry));
             }
             /*
