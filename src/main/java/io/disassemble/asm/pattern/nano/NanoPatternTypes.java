@@ -6,7 +6,7 @@ package io.disassemble.asm.pattern.nano;
  */
 public interface NanoPatternTypes {
 
-    String NO_PARAMS = "NoParams";
+    String NO_PARAMETERS = "NoParameters";
     String NO_RETURN = "NoReturn";
     String CHAINED = "Chained";
     String RECURSIVE = "Recursive";
@@ -20,7 +20,7 @@ public interface NanoPatternTypes {
 
     String STRAIGHT_LINE = "StraightLine";
     String LOOPING = "Looping";
-    String EXCEPTIONS = "Exceptions";
+    String DIRECTLY_THROWS_EXCEPTIONS = "DirectlyThrowsException";
 
     String LOCAL_READER = "LocalReader";
     String LOCAL_WRITER = "LocalWriter";

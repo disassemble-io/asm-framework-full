@@ -3,7 +3,7 @@ package io.disassemble.asm;
 import io.disassemble.asm.pattern.nano.AdvancedNanoPattern;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
 import io.disassemble.asm.pattern.nano.calling.*;
-import io.disassemble.asm.pattern.nano.flow.control.Exceptions;
+import io.disassemble.asm.pattern.nano.flow.control.DirectlyThrowsException;
 import io.disassemble.asm.pattern.nano.flow.control.Looping;
 import io.disassemble.asm.pattern.nano.flow.control.StraightLine;
 import io.disassemble.asm.pattern.nano.flow.data.*;
@@ -11,6 +11,9 @@ import io.disassemble.asm.pattern.nano.oop.FieldReader;
 import io.disassemble.asm.pattern.nano.oop.FieldWriter;
 import io.disassemble.asm.pattern.nano.oop.ObjectCreator;
 import io.disassemble.asm.pattern.nano.oop.TypeManipulator;
+import io.disassemble.asm.pattern.nano.structural.Annotated;
+import io.disassemble.asm.pattern.nano.structural.NoParameters;
+import io.disassemble.asm.pattern.nano.structural.SpecifiesException;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.visitor.flow.ControlFlowGraph;
 import org.objectweb.asm.Type;
@@ -26,13 +29,14 @@ import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Tyler Sedlar
+ * @author Christopher Carpenter
  * @since 3/8/15
  */
 public class ClassMethod {
-
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
-            new NoParams(), new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
-            new StraightLine(), new Looping(), new Exceptions(), // Control Flow
+            new NoParameters(), new Annotated(), new SpecifiesException(), // Structural
+            new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
+            new StraightLine(), new Looping(), new DirectlyThrowsException(), // Control Flow
     };
 
     private static final AdvancedNanoPattern[] ADVANCED_NANO_PATTERNS = {
@@ -145,6 +149,10 @@ public class ClassMethod {
      */
     public InsnList instructions() {
         return method.instructions;
+    }
+
+    public List<String> exceptions() {
+        return method.exceptions;
     }
 
     /**
@@ -316,10 +324,6 @@ public class ClassMethod {
         return true;
     }
 
-    @Override
-    public int hashCode() {
-        return method.hashCode();
-    }
 
     /**
      * Gets the amount of parameters in this method's desc.
@@ -356,5 +360,10 @@ public class ClassMethod {
     public boolean equals(Object o) {
         return (o instanceof ClassMethod && ((ClassMethod) o).method.equals(method)) ||
                 (o instanceof MethodNode && method.equals(o));
+    }
+
+    @Override
+    public int hashCode() {
+        return method.hashCode();
     }
 }
