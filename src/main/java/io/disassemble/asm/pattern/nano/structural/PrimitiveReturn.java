@@ -3,7 +3,7 @@ package io.disassemble.asm.pattern.nano.structural;
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.pattern.nano.PatternInfo;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 
 import java.util.Arrays;
 
