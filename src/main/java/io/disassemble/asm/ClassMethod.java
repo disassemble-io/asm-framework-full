@@ -2,7 +2,10 @@ package io.disassemble.asm;
 
 import io.disassemble.asm.pattern.nano.AdvancedNanoPattern;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
-import io.disassemble.asm.pattern.nano.calling.*;
+import io.disassemble.asm.pattern.nano.calling.Chained;
+import io.disassemble.asm.pattern.nano.calling.Leaf;
+import io.disassemble.asm.pattern.nano.calling.Recursive;
+import io.disassemble.asm.pattern.nano.calling.SameName;
 import io.disassemble.asm.pattern.nano.flow.control.DirectlyThrowsException;
 import io.disassemble.asm.pattern.nano.flow.control.Looping;
 import io.disassemble.asm.pattern.nano.flow.control.StraightLine;
@@ -11,9 +14,7 @@ import io.disassemble.asm.pattern.nano.oop.FieldReader;
 import io.disassemble.asm.pattern.nano.oop.FieldWriter;
 import io.disassemble.asm.pattern.nano.oop.ObjectCreator;
 import io.disassemble.asm.pattern.nano.oop.TypeManipulator;
-import io.disassemble.asm.pattern.nano.structural.Annotated;
-import io.disassemble.asm.pattern.nano.structural.NoParameters;
-import io.disassemble.asm.pattern.nano.structural.SpecifiesException;
+import io.disassemble.asm.pattern.nano.structural.*;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.visitor.flow.ControlFlowGraph;
 import org.objectweb.asm.Type;
@@ -34,7 +35,7 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class ClassMethod {
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
-            new NoParameters(), new NoReturn(), new PrimitiveReturn(), new ObjectReturn(), new Annotated(), new SpecifiesException(), // Structural
+            new NoParameters(), new NoReturn(), new PrimitiveReturn(), new ClassReturn(),new ArrayReturn(), new Annotated(), new SpecifiesException(), // Structural
             new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
             new StraightLine(), new Looping(), new DirectlyThrowsException(), // Control Flow
     };

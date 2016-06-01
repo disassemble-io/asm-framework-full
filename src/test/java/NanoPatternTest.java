@@ -28,10 +28,10 @@ public class NanoPatternTest {
         Assert.assertTrue(patterns.get("Chained") == 38);
         Assert.assertTrue(patterns.get("SameName") == 419);
         Assert.assertTrue(patterns.get("TypeManipulator") == 2145);
-        Assert.assertTrue(patterns.get("Looping") == 474);
+        Assert.assertTrue("Looping was detected " + patterns.get("Looping") + " times",patterns.get("Looping") == 474);
         Assert.assertTrue(patterns.get("LocalWriter") == 5673);
         Assert.assertTrue(patterns.get("FieldWriter") == 1264);
-        Assert.assertTrue(patterns.get("ObjectReturn") == 643);
+        Assert.assertTrue("ClassReturn was detected " + patterns.get("ClassReturn") + " times", patterns.get("ClassReturn") == 630);
         Assert.assertTrue(patterns.get("ObjectCreator") == 1750);
         Assert.assertTrue(patterns.get("ArrayReader") == 441);
         Assert.assertTrue(patterns.get("DirectlyThrowsException") == 57);
@@ -39,12 +39,13 @@ public class NanoPatternTest {
         Assert.assertTrue(patterns.get("StraightLine") == 1109);
         Assert.assertTrue(patterns.get("SpecifiesException") == 105);
         Assert.assertTrue(patterns.get("NoParameters") == 774);
-        Assert.assertTrue(patterns.get("PrimitiveReturn") == 402);
+        Assert.assertTrue("PrimitiveReturn was detected " + patterns.get("PrimitiveReturn") + " times", patterns.get("PrimitiveReturn") == 371);
         Assert.assertTrue(patterns.get("ArrayCreator") == 545);
         Assert.assertTrue(patterns.get("Leaf") == 479);
         Assert.assertTrue(patterns.get("ArrayWriter") == 2223);
         Assert.assertTrue(patterns.get("Recursive") == 89);
         Assert.assertTrue(patterns.get("FieldReader") == 5133);
         Assert.assertTrue(patterns.get("LocalReader") == 23134);
+        Assert.assertTrue(patterns.get("ArrayReturn") == 44);
     }
 }

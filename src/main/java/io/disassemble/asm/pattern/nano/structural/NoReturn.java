@@ -1,4 +1,4 @@
-package io.disassemble.asm.pattern.nano.calling;
+package io.disassemble.asm.pattern.nano.structural;
 
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.pattern.nano.PatternInfo;

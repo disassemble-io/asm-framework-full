@@ -1,8 +1,9 @@
-package io.disassemble.asm.pattern.nano.calling;
+package io.disassemble.asm.pattern.nano.structural;
 
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.pattern.nano.PatternInfo;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
+import jdk.internal.org.objectweb.asm.Type;
 
 import java.util.Arrays;
 
@@ -19,7 +20,6 @@ public class PrimitiveReturn extends SimpleNanoPattern {
 
     @Override
     public boolean matches(ClassMethod method) {
-        String mdesc = method.desc();
-        return Arrays.binarySearch(PRIMITIVE_DESCRIPTORS, mdesc.charAt(mdesc.length() - 1)) >= 0;
+        return Arrays.binarySearch(PRIMITIVE_DESCRIPTORS, Type.getReturnType(method.desc()).getDescriptor().charAt(0)) >= 0;
     }
 }
