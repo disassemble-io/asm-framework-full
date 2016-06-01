@@ -5,14 +5,13 @@ import io.disassemble.asm.pattern.nano.PatternInfo;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
 
 /**
- * @author Tyler Sedlar
- * @since 2/1/16
+ * @author Christopher Carpenter
  */
-@PatternInfo(category = "Structural", name = "NoReturn", simple = true, description = "returns void")
-public class NoReturn extends SimpleNanoPattern {
+@PatternInfo(category = "Structural", name = "ObjectReturn", simple = true, description = "returns an object")
+public class ObjectReturn extends SimpleNanoPattern {
 
     @Override
     public boolean matches(ClassMethod method) {
-        return method.desc().endsWith(")V");
+        return method.desc().endsWith(";");
     }
 }

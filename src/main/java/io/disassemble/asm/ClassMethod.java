@@ -34,8 +34,8 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class ClassMethod {
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
-            new NoParameters(), new Annotated(), new SpecifiesException(), // Structural
-            new NoReturn(), new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
+            new NoParameters(), new NoReturn(), new PrimitiveReturn(), new ObjectReturn(), new Annotated(), new SpecifiesException(), // Structural
+            new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
             new StraightLine(), new Looping(), new DirectlyThrowsException(), // Control Flow
     };
 
