@@ -19,7 +19,7 @@ public abstract class Archive {
      * Completely reads an open input stream and then closes it.
      *
      * @param in The InputStream to be read
-     * @return a non-null {@code byte[]} containing the results the now closed <@code InputStream>
+     * @return a non-null {@code byte[]} containing the results the now closed {@code InputStream}
      */
     protected static byte[] readInputStream(InputStream in) throws IOException {
         try (ReadableByteChannel inChannel = Channels.newChannel(in)) {
