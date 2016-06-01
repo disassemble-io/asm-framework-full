@@ -1,18 +1,14 @@
-package io.disassemble.asm.util;
+package io.disassemble.asm;
 
 import com.linkedin.parseq.MultiException;
-import io.disassemble.asm.ClassFactory;
-import io.disassemble.asm.ClassFactoryVisitor;
-import io.disassemble.asm.ClassMethodVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
@@ -29,11 +25,19 @@ import java.util.jar.JarOutputStream;
  * @version 1.1.0
  * @since 2/12/16
  */
-public class JarArchive {
+public class JarArchive extends Archive {
     private final ConcurrentHashMap<String, ClassFactory> classes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, byte[]> resources = new ConcurrentHashMap<>();
     private final File file;
-    private boolean built = false;
+
+    /**
+     * Constructs a {@code JarArchive} using the specified input file path.
+     *
+     * @param filePath the path to the {@code File} to build the JarArchive from.
+     */
+    public JarArchive(String filePath) {
+        this(new File(filePath));
+    }
 
     /**
      * Constructs a {@code JarArchive} using the specified input file.
@@ -44,55 +48,7 @@ public class JarArchive {
         this.file = file;
     }
 
-    /**
-     * Completely reads an open input stream and then closes it.
-     *
-     * @param in The InputStream to be read
-     * @return a non-null {@code byte[]} containing the results the now closed <@code InputStream>
-     */
-    private static byte[] readInputStream(InputStream in) throws IOException {
-        try (ReadableByteChannel inChannel = Channels.newChannel(in)) {
-            //ByteArrayOutputStreams don't need to be closed.
-            /*
-             TODO
-             The default initial capacity of a ByteArrayOutputStream is only 32.
-             We need to set an initial capacity becuause when it's exceeded it only doubles.
-             That means it'll resize a LOT on large classes.
-             I recommend we check if we have an InputStream with a reliable #available method.
-             If so, we should use an initial capacity based on that.
-             Otherwise, I recommend something along the lines of Math.min(4096, Math.max(32, in.available()));
-             */
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            /*
-            TODO
-            Is writing to a WriteByteChannel that wraps a ByteArrayOutputStream more efficient?
-            I don't see how it could be. It seems like it would just add overhead. I understand that
-            using NIO for reading would yield better results.
-            */
-            try (WritableByteChannel outChannel = Channels.newChannel(baos)) {
-                /*
-                TODO
-                Benchmark if 4096 is optimal, allocating 8192 my be more efficient because that's
-                the default transfer size of ReadableByteChannelImpl. However, if {@code in} is
-                an instance of FileInputStream the default transfer size may be different
-                because Channels.newChannel(InputStream) will instead return an implementation of
-                FileChannelImpl.
-                */
-                ByteBuffer buffer = ByteBuffer.allocate(4096);
-                while (inChannel.read(buffer) != -1) {
-                    buffer.flip();
-                    outChannel.write(buffer);
-                    buffer.compact();
-                }
-                buffer.flip();
-                while (buffer.hasRemaining()) {
-                    outChannel.write(buffer);
-                }
-                return baos.toByteArray();
-            }
-        }
-    }
-
+    @Override
     public ConcurrentMap<String, ClassFactory> classes() {
         if (!built()) {
             throw new IllegalStateException("The JarArchive must be built before its classes can be retrieved.");
@@ -100,42 +56,12 @@ public class JarArchive {
         return classes;
     }
 
+    @Override
     public ConcurrentMap<String, byte[]> resources() {
         if (!built()) {
             throw new IllegalStateException("The JarArchive must be built before its resources can be retrieved.");
         }
         return resources;
-    }
-
-    /**
-     * Dispatches the given visitor to all the loaded classes.
-     *
-     * @param cfv The visitor to dispatch.
-     */
-    public void dispatch(ClassFactoryVisitor cfv) {
-        if (!built()) {
-            throw new IllegalStateException("The JarArchive must be built before visitors can be dispatched.");
-        }
-        for (ClassFactory factory : classes.values()) {
-            factory.accept(cfv);
-        }
-    }
-
-    /**
-     * Dispatches the given visitor to all the loaded methods.
-     *
-     * @param cmv The visitor to dispatch.
-     */
-    public void dispatch(ClassMethodVisitor cmv) {
-        if (!built()) {
-            throw new IllegalStateException("The JarArchive must be built before visitors can be dispatched.");
-        }
-        for (ClassFactory factory : classes.values()) {
-            factory.dispatch(cmv);
-            if (cmv.locked()) {
-                return;
-            }
-        }
     }
 
     /**
@@ -148,20 +74,12 @@ public class JarArchive {
     }
 
     /**
-     * Gets the build state, that is whether or not this JarArchive has been built.
-     *
-     * @return true if this JarArchive has been built.
-     */
-    public boolean built() {
-        return built;
-    }
-
-    /**
      * Builds the class and resource maps using parallelism.
      *
      * @return The amount of milliseconds it took to build the classes and resources
      * @throws IOException if an error occurs while locating, reading, or parsing the file
      */
+    @Override
     public long build() throws IOException {
         return build(true);
     }
@@ -207,7 +125,7 @@ public class JarArchive {
                     if (name.endsWith(".class")) {
                         ClassNode cn = new ClassNode();
                         ClassReader reader = new ClassReader(readInputStream(input));
-                        reader.accept(cn, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+                        reader.accept(cn, ClassReader.SKIP_FRAMES);
                         classes.put(name.replace(".class", ""), new ClassFactory(cn));
                     } else {
                         resources.put(name, readInputStream(input));
@@ -280,16 +198,8 @@ public class JarArchive {
      *
      * @throws IOException If an error occurs while manipulating an output stream
      */
+    @Override
     public void write() throws IOException {
         write(file, ClassWriter.COMPUTE_MAXS);
-    }
-
-    /**
-     * Clears the contents of the classes and resources and resets {@code built} to false.
-     */
-    public void reset() {
-        classes.clear();
-        resources.clear();
-        built = false;
     }
 }

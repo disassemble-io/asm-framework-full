@@ -35,7 +35,7 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class ClassMethod {
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
-            new NoParameters(), new NoReturn(), new PrimitiveReturn(), new ClassReturn(),new ArrayReturn(), new Annotated(), new SpecifiesException(), // Structural
+            new NoParameters(), new NoReturn(), new PrimitiveReturn(), new ClassReturn(), new ArrayReturn(), new Annotated(), new SpecifiesException(), // Structural
             new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
             new StraightLine(), new Looping(), new DirectlyThrowsException(), // Control Flow
     };
@@ -179,7 +179,7 @@ public class ClassMethod {
      * @return The amount of instructions matching the given opcode.
      */
     public int count(int opcode) {
-        return Assembly.count(instructions(), insn -> insn.getOpcode() == opcode);
+        return count(insn -> insn.getOpcode() == opcode);
     }
 
     /**

@@ -1,4 +1,4 @@
-import io.disassemble.asm.util.JarArchive;
+import io.disassemble.asm.JarArchive;
 import org.junit.Assert;
 import org.junit.Test;
 

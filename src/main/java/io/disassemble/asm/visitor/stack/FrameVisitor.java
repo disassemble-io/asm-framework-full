@@ -45,15 +45,13 @@ public abstract class FrameVisitor extends ClassMethodVisitor {
                             continue;
                         }
                         int locals = frame.getLocals();
-                        if (locals > 0) {
-                            for (int i = 0; i < locals; i++) {
-                                BasicValue val = (BasicValue) frame.getLocal(i);
-                                if (val != null && interpreter.values.containsKey(val)) {
-                                    List<AbstractInsnNode> list = interpreter.values.get(val);
-                                    if (!frameInstructions.contains(list)) {
-                                        stackFrames.add(new StackFrame(interpreter, frame, new StackValue(val, list)));
-                                        frameInstructions.add(list);
-                                    }
+                        for (int i = 0; i < locals; i++) {
+                            BasicValue val = (BasicValue) frame.getLocal(i);
+                            if (val != null && interpreter.values.containsKey(val)) {
+                                List<AbstractInsnNode> list = interpreter.values.get(val);
+                                if (!frameInstructions.contains(list)) {
+                                    stackFrames.add(new StackFrame(interpreter, frame, new StackValue(val, list)));
+                                    frameInstructions.add(list);
                                 }
                             }
                         }
