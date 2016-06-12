@@ -171,6 +171,22 @@ public class ClassFactory {
     }
 
     /**
+     * Adds the given field to this class.
+     *
+     * @param field The field to add.
+     */
+    public void add(ClassField field) {
+        if (node.fields.contains(field.field)) {
+            return;
+        }
+        node.fields.add(field.field);
+        ClassField[] fields = new ClassField[this.fields.length + 1];
+        System.arraycopy(this.fields, 0, fields, 0, this.fields.length);
+        fields[fields.length - 1] = field;
+        this.fields = fields;
+    }
+
+    /**
      * Calls ClassNode#accept with the given visitor.
      *
      * @param cfv The visitor to call.
