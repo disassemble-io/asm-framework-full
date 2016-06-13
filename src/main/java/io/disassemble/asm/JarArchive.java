@@ -1,16 +1,15 @@
 package io.disassemble.asm;
 
 import com.linkedin.parseq.MultiException;
+import io.disassemble.asm.util.Security;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,6 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 /**
  * @author Tyler Sedlar
@@ -26,9 +26,11 @@ import java.util.jar.JarOutputStream;
  * @since 2/12/16
  */
 public class JarArchive extends Archive {
+
     private final ConcurrentHashMap<String, ClassFactory> classes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, byte[]> resources = new ConcurrentHashMap<>();
     private final File file;
+    private Manifest manifest;
 
     /**
      * Constructs a {@code JarArchive} using the specified input file path.
@@ -108,10 +110,11 @@ public class JarArchive extends Archive {
             throw new IllegalStateException("The JarArchive cannot be built more than once.");
         }
         try (JarFile jar = new JarFile(file)) {
+            manifest = jar.getManifest();
             ArrayList<JarEntry> entries = Collections.list(jar.entries());
             ConcurrentHashMap<String, InputStream> entryStreams = new ConcurrentHashMap<>(entries.size());
             for (JarEntry entry : entries) {
-                //getInputStream(Entry) is synronized so can't be made to run in parallel
+                //getInputStream(Entry) is synchronized so can't be made to run in parallel
                 entryStreams.put(entry.getName(), jar.getInputStream(entry));
             }
             /*
@@ -124,7 +127,8 @@ public class JarArchive extends Archive {
                 try {
                     if (name.endsWith(".class")) {
                         ClassNode cn = new ClassNode();
-                        ClassReader reader = new ClassReader(readInputStream(input));
+                        byte[] bytes = readInputStream(input);
+                        ClassReader reader = new ClassReader(bytes);
                         reader.accept(cn, ClassReader.SKIP_FRAMES);
                         classes.put(name.replace(".class", ""), new ClassFactory(cn));
                     } else {
@@ -166,17 +170,40 @@ public class JarArchive extends Archive {
             throw new IllegalStateException("You cannot write a JarArchive until it has been built.");
         }
         try (JarOutputStream output = new JarOutputStream(new FileOutputStream(destinationFile))) {
+            Map<String, String> hashes = new HashMap<>();
             for (Map.Entry<String, ClassFactory> entry : classes.entrySet()) {
                 ClassFactory factory = entry.getValue();
-                output.putNextEntry(new JarEntry(factory.name().replaceAll("\\.", "/") + ".class"));
-                ClassWriter writer = new ClassWriter(writerFlags);
+                String entryKey = factory.name().replaceAll("\\.", "/") + ".class";
+                output.putNextEntry(new JarEntry(entryKey));
+                ClassWriter writer = new CustomClassWriter(this, writerFlags);
                 factory.node.accept(writer);
-                output.write(writer.toByteArray());
+                byte[] bytes = writer.toByteArray();
+                if (manifest != null) {
+                    hashes.put(entryKey, Security.b64SHA1(bytes));
+                }
+                output.write(bytes);
                 output.closeEntry();
             }
             for (Map.Entry<String, byte[]> entry : resources.entrySet()) {
-                output.putNextEntry(new JarEntry(entry.getKey()));
-                output.write(entry.getValue());
+                String key = entry.getKey();
+                byte[] bytes = entry.getValue();
+                if (key.equals("META-INF/MANIFEST.MF")) {
+                    manifest.getEntries().forEach((file, attrs) -> attrs.forEach((k, v) -> {
+                        String lookupKey = k.toString();
+                        if (lookupKey.equals("SHA1-Digest")) {
+                            attrs.put(k, hashes.get(file));
+                        }
+                    }));
+                    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                        manifest.write(out);
+                        bytes = out.toByteArray();
+                    }
+                } else if (key.endsWith(".SF") || key.endsWith(".RSA")) {
+                    // These likely also need to be in place for signed jars, but needs some research.
+                    continue;
+                }
+                output.putNextEntry(new JarEntry(key));
+                output.write(bytes);
                 output.closeEntry();
             }
             output.flush();
