@@ -1,6 +1,6 @@
 package io.disassemble.asm.visitor.expr.node;
 
-import jdk.internal.org.objectweb.asm.Type;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import static org.objectweb.asm.Opcodes.*;
