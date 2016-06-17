@@ -5,7 +5,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.tree.*;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ASM5;
 
 /**
  * @author Tyler Sedlar
@@ -21,7 +21,7 @@ public class ClassMethodVisitor extends MethodVisitor {
         super(ASM5, null);
     }
 
-    private AbstractInsnNode current() {
+    protected AbstractInsnNode current() {
         return method.instructions().get(idx++);
     }
 

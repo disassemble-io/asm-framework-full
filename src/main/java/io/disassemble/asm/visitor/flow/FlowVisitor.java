@@ -30,7 +30,7 @@ public class FlowVisitor extends ClassMethodVisitor {
         this.graph = graph;
     }
 
-    private void newControlFlowEdge(int from, int to) {
+    protected void newControlFlowEdge(int from, int to) {
         if (!successors.containsKey(from)) {
             successors.put(from, new ArrayList<>());
         }
@@ -118,7 +118,9 @@ public class FlowVisitor extends ClassMethodVisitor {
                 }
             }
         }
-        graph.blocks.addAll(blocks.values());
+        if (graph != null) {
+            graph.blocks.addAll(blocks.values());
+        }
         super.reset();
         this.successors.clear();
         this.visited.clear();

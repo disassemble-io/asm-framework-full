@@ -2,7 +2,7 @@ package io.disassemble.asm;
 
 import org.objectweb.asm.tree.FieldNode;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 /**
  * @author Tyler Sedlar

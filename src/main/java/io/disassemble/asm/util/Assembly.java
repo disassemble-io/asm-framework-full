@@ -4,6 +4,7 @@ import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassField;
 import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.Label;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
 
@@ -457,6 +458,11 @@ public class Assembly {
             case JUMP_INSN:
             case TABLESWITCH_INSN:
             case LOOKUPSWITCH_INSN: {
+                if (op == Opcodes.GOTO) {
+                    JumpInsnNode jin = (JumpInsnNode) insn;
+                    builder.append(' ');
+                    builder.append(Assembly.toString(jin.label));
+                }
                 break;
             }
             case LDC_INSN: {

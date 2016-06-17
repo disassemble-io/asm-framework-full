@@ -1,6 +1,5 @@
 package io.disassemble.asm.visitor.flow;
 
-import io.disassemble.asm.util.Assembly;
 import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.LabelNode;
 

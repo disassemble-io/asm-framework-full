@@ -26,7 +26,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 /**
  * @author Tyler Sedlar

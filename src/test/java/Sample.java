@@ -6,6 +6,9 @@ public class Sample {
 
     private int var;
 
+    private static int v1 = 10, v2 = 20;
+    private static int[] v3;
+
     public void setter(int var) {
         this.var = var;
     }
@@ -27,4 +30,70 @@ public class Sample {
             }
         }
     }
+
+    void t(int var1) {
+        /**
+         * Any stack segment should be iterated in reverse.
+         * - If a unary/binary expr is hit, it should start a new tree.
+         *  - POP 'X' amount of previous instructions to the new tree.
+         *  - If the expr right before is a unary/binary expr, it should start a new inner tree.
+         *   - This should let the parent tree POP again. As if it never originally did.
+         *  - any other instructions should be added to the 'root.'
+         * - After a full iteration, the root trees should be sorted in reverse.
+         ===================================================
+             new-insn: LDC java.lang.Integer -33096101 <-- peekx2 == LabelNode
+             new-insn: GETSTATIC Sample.v1 I
+             binary-insn: IMUL
+             new-insn: GETSTATIC Sample.v3 [I
+             new-insn: GETSTATIC Sample.v2 I
+             new-insn: LDC java.lang.Integer 1521728277
+             binary-insn: IMUL
+             binary-insn: IALOAD
+             binary-insn: IF_ICMPLE
+             new-insn: GETSTATIC Sample.v1 I
+             new-insn: GETSTATIC Sample.v3 [I
+             new-insn: LDC java.lang.Integer 1521728277
+             new-insn: GETSTATIC Sample.v2 I
+             binary-insn: IMUL
+             binary-insn: IALOAD
+             new-insn: LDC java.lang.Integer -1944452653
+             binary-insn: IMUL
+             binary-insn: ISUB
+             unary-insn: PUTSTATIC Sample.v1 I <-- POPx1 == LabelNode (end <- loop)
+         ===================================================
+            WHILE_LOOP
+                IF_ICMPLE
+                    IALOAD (POP 2 -- BinaryOperation)
+                        IMUL (POP 2 -- BinaryOperation)
+                            LDC java.lang.Integer 1521728277
+                            GETSTATIC Sample.v2 I
+                        GETSTATIC Sample.v3 [I
+                    IMUL (POP 2 - BinaryOpertion)
+                        GETSTATIC Sample.v1 I
+                        LDC java.lang.Integer -33096101
+                PUTSTATIC Sample.v1 I (Assumed POP 1)
+                    ISUB (POP 2 - BinaryOperation)
+                        IMUL (POP 2 -- BinaryOperation)
+                            LDC java.lang.Integer -1944452653
+                            IALOAD (POP 2 -- BinaryOperation)
+                                IMUL (POP 2 -- BinaryOperation)
+                                    GETSTATIC Sample.v2 I
+                                    LDC java.lang.Integer 1521728277
+                                GETSTATIC Sample.v3 [I
+                        GETSTATIC Sample.v1 I
+         */
+        while(-33096101 * v1 > v3[v2 * 1521728277]) {
+            v1 -= v3[1521728277 * v2] * -1944452653;
+        }
+    }
+
+    int u(int p1, boolean n) {
+        return (n ? (p1 + (v1 * -33096101)) : (p1 + (v2 * 1521728277)));
+    }
+
+    int call(int a, int b) {
+        System.out.println(a + ", " + b);
+        return (a + b);
+    }
+
 }

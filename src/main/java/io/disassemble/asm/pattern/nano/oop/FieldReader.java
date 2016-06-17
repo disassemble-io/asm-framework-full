@@ -4,7 +4,8 @@ import io.disassemble.asm.pattern.nano.AdvancedNanoPattern;
 import io.disassemble.asm.pattern.nano.PatternInfo;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
 /**
  * @author Tyler Sedlar
  * @since 2/1/16

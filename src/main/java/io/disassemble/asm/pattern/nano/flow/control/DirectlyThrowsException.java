@@ -4,7 +4,7 @@ import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.pattern.nano.PatternInfo;
 import io.disassemble.asm.pattern.nano.SimpleNanoPattern;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ATHROW;
 
 /**
  * @author Tyler Sedlar
