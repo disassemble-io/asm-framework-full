@@ -8,6 +8,8 @@ import static org.objectweb.asm.Opcodes.*;
 /**
  * @author Tyler Sedlar
  * @since 6/17/16
+ *
+ * A ClassMethodVisitor that replicates Basic/SourceInterpreter.
  */
 public class InterpretingVisitor extends ClassMethodVisitor {
 
@@ -69,28 +71,10 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case IF_ICMPLE:
             case IF_ACMPEQ:
             case IF_ACMPNE:
-            case PUTFIELD: {
-                visitBinaryOperation(current);
-                break;
-            }
-            case ILOAD:
-            case LLOAD:
-            case FLOAD:
-            case DLOAD:
-            case ALOAD:
-            case ISTORE:
-            case LSTORE:
-            case FSTORE:
-            case DSTORE:
-            case ASTORE:
-            case DUP:
+            case PUTFIELD:
             case DUP_X1:
-            case DUP_X2:
-            case DUP2:
-            case DUP2_X1:
-            case DUP2_X2:
-            case SWAP: {
-                visitCopyOperation(current);
+            case DUP2: {
+                visitBinaryOperation(current);
                 break;
             }
             case INVOKEVIRTUAL:
@@ -102,6 +86,12 @@ public class InterpretingVisitor extends ClassMethodVisitor {
                 visitNaryOperation(current);
                 break;
             }
+            case ILOAD:
+            case LLOAD:
+            case FLOAD:
+            case DLOAD:
+            case ALOAD:
+            case SWAP:
             case ACONST_NULL:
             case ICONST_M1:
             case ICONST_0:
@@ -122,16 +112,16 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case LDC:
             case JSR:
             case GETSTATIC:
-            case NEW: {
-                visitNewOperation(current);
+            case NEW:
+            case NEWARRAY:
+            case ANEWARRAY:
+            case CHECKCAST:
+            case INSTANCEOF: {
+                visitNullaryOperation(current);
                 break;
             }
-            case IRETURN:
-            case LRETURN:
-            case FRETURN:
-            case DRETURN:
-            case ARETURN: {
-                visitReturnOperation(current);
+            case DUP2_X2: {
+                visitQuaternaryOperation(current);
                 break;
             }
             case IASTORE:
@@ -141,15 +131,12 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case AASTORE:
             case BASTORE:
             case CASTORE:
-            case SASTORE: {
+            case SASTORE:
+            case DUP2_X1:
+            case DUP_X2: {
                 visitTernaryOperation(current);
                 break;
             }
-            case INEG:
-            case LNEG:
-            case FNEG:
-            case DNEG:
-            case IINC:
             case I2L:
             case I2F:
             case I2D:
@@ -165,6 +152,11 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case I2B:
             case I2C:
             case I2S:
+            case INEG:
+            case LNEG:
+            case FNEG:
+            case DNEG:
+            case IINC:
             case IFEQ:
             case IFNE:
             case IFLT:
@@ -175,48 +167,79 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case LOOKUPSWITCH:
             case PUTSTATIC:
             case GETFIELD:
-            case NEWARRAY:
-            case ANEWARRAY:
             case ARRAYLENGTH:
             case ATHROW:
-            case CHECKCAST:
-            case INSTANCEOF:
             case MONITORENTER:
             case MONITOREXIT:
             case IFNULL:
-            case IFNONNULL: {
+            case IFNONNULL:
+            case ISTORE:
+            case LSTORE:
+            case FSTORE:
+            case DSTORE:
+            case ASTORE:
+            case DUP:
+            case IRETURN:
+            case LRETURN:
+            case FRETURN:
+            case DRETURN:
+            case ARETURN: {
                 visitUnaryOperation(current);
+                break;
+            }
+            default: {
+                visitNullaryOperation(current); // assumed GOTO/LineNumberNode.
                 break;
             }
         }
         return current;
     }
 
+    /**
+     * Visits instructions that pop 2 instructions from the stack.
+     *
+     * @param insn The base instruction causing a stack change.
+     */
     public void visitBinaryOperation(AbstractInsnNode insn) {
-
     }
 
-    public void visitCopyOperation(AbstractInsnNode insn) {
-
-    }
-
+    /**
+     * Visits instructions that pop N instructions from the stack.
+     *
+     * @param insn The base instruction causing a stack change.
+     */
     public void visitNaryOperation(AbstractInsnNode insn) {
-
     }
 
-    public void visitNewOperation(AbstractInsnNode insn) {
-
+    /**
+     * Visits instructions that do not pop any instructions from the stack.
+     *
+     * @param insn The base instruction.
+     */
+    public void visitNullaryOperation(AbstractInsnNode insn) {
     }
 
-    public void visitReturnOperation(AbstractInsnNode insn) {
-
+    /**
+     * Visits instructions that pop 4 instructions from the stack.
+     *
+     * @param insn The base instruction causing a stack change.
+     */
+    public void visitQuaternaryOperation(AbstractInsnNode insn) {
     }
 
+    /**
+     * Visits instructions that pop 3 instructions from the stack.
+     *
+     * @param insn The base instruction causing a stack change.
+     */
     public void visitTernaryOperation(AbstractInsnNode insn) {
-
     }
 
+    /**
+     * Visits instructions that pop 1 instruction from the stack.
+     *
+     * @param insn The base instruction causing a stack change.
+     */
     public void visitUnaryOperation(AbstractInsnNode insn) {
-
     }
 }

@@ -1,12 +1,15 @@
 import io.disassemble.asm.ClassFactory;
-import io.disassemble.asm.ClassMethod;
-import io.disassemble.asm.util.Assembly;
-import io.disassemble.asm.visitor.expr.ExpressionVisitor;
-import io.disassemble.asm.visitor.expr.node.BasicExpr;
+import io.disassemble.asm.JarArchive;
+import io.disassemble.asm.visitor.expr.ExprTree;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import visitor.EuclideanVisitor;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeSet;
 
 /**
  * @author Tyler Sedlar
@@ -15,59 +18,51 @@ import java.util.*;
 public class ExpressionTest {
 
     private static final String TEST_CLASS_NAME = "Sample";
+    private static final String TEST_JAR = ""; // "./src/test/excluded-java/res/jars/115.jar";
 
     private static final Map<String, ClassFactory> classes = new HashMap<>();
 
     @BeforeClass
     public static void setup() {
-        ClassScanner.scanClassPath(
-                cn -> cn.name.equals(TEST_CLASS_NAME),
-                cm -> classes.put(cm.owner.name(), cm.owner)
-        );
-    }
-
-    /**
-     * TODO:
-     * - use this to build trees for heritage -- include (Deque<BasicExpr> heritage) in BasicExpr.
-     * - replace /indent/ param with (BasicExpr parent)
-     */
-    private void handleExpr(Iterator<BasicExpr> itr, BasicExpr expr, String indent) {
-        System.out.println(indent + Assembly.toString(expr.insn) + " - pulls from " + expr.proceeding() + " slots");
-        int proceeding = expr.proceeding();
-        for (int i = 0; i < proceeding; i++) {
-            handleExpr(itr, itr.next(), indent + "  ");
+        if (!TEST_CLASS_NAME.isEmpty()) {
+            ClassScanner.scanClassPath(
+                    cn -> cn.name.equals(TEST_CLASS_NAME),
+                    cm -> {
+                        if (!classes.containsKey(cm.owner.name())) {
+                            classes.put(cm.owner.name(), cm.owner);
+                        }
+                    }
+            );
+        }
+        if (!TEST_JAR.isEmpty()) {
+            JarArchive archive = new JarArchive(TEST_JAR);
+            try {
+                archive.build();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            classes.putAll(archive.classes());
         }
     }
 
     @Test
     public void testExpression() {
-        Map<String, List<BasicExpr>> expressions = new HashMap<>();
-        ExpressionVisitor visitor = new ExpressionVisitor() {
-            public void visitExpr(BasicExpr expr) {
-                String key = method.key();
-                if (!expressions.containsKey(key)) {
-                    expressions.put(key, new ArrayList<>());
-                }
-                expressions.get(key).add(expr);
-            }
-        };
+        Map<String, Deque<ExprTree>> trees = new HashMap<>();
         long start = System.nanoTime();
-        classes.values().forEach(factory -> {
-            for (ClassMethod method : factory.methods) {
-                if (method.key().equals("Sample.t(I)V")) {
-                    method.accept(visitor);
-                    System.out.println(method.key() + ":");
-                    List<BasicExpr> exprs = expressions.get(method.key());
-                    Collections.reverse(exprs);
-                    Iterator<BasicExpr> itr = exprs.iterator();
-                    while (itr.hasNext()) {
-                        handleExpr(itr, itr.next(), "");
-                    }
-                    // TODO: fetch /only/ root exprs + call Collections#reverse them again to maintain previous order.
-                }
-            }
-        });
+        trees.putAll(ExprTree.buildAll(classes));
         long end = System.nanoTime();
-        System.out.printf("%.4f seconds\n", (end - start) / 1e9);
+        System.out.printf("trees built in %.4f seconds\n", (end - start) / 1e9);
+        EuclideanVisitor visitor = new EuclideanVisitor();
+        start = System.nanoTime();
+        trees.values().forEach(exprTrees -> exprTrees.forEach(tree -> tree.accept(visitor)));
+        end = System.nanoTime();
+        System.out.printf("visited %sD/%sE mults in %.4f seconds\n", visitor.decoders().size(),
+                visitor.encoders().size(), (end - start) / 1e9);
+        start = System.nanoTime();
+        Map<String, Number> matched = visitor.match();
+        end = System.nanoTime();
+        System.out.printf("found %s multipliers in %.4f seconds\n", matched.size(), (end - start) / 1e9);
+        new TreeSet<>(matched.keySet())
+                .forEach(key -> System.out.println(key + " * " + matched.get(key)));
     }
 }

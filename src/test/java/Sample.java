@@ -88,12 +88,26 @@ public class Sample {
     }
 
     int u(int p1, boolean n) {
-        return (n ? (p1 + (v1 * -33096101)) : (p1 + (v2 * 1521728277)));
+//        return (p1 + (v1 * -33096101));
+//        return (n ? (p1 + (v1 * -33096101)) : (p1 + (v2 * 1521728277)));
+//        return (n ? (p1 < v1 ? (p1 + (v1 * -33096101)) : v1) : (p1 + (v2 * 1521728277)));
+        // IINC@var#3 (for) ISTORE@var#3 ICONST_0 (int i = 0)
+        // IF_ICMPGE var#3, var#1 (p1 >= i)
+        // ISUB var#1, var#3 (p1 - i)
+        // ISTORE #1 (@IINC#var) (p1 = ^)
+        for (int i = 0; i < p1; i++) {
+            p1 -= i;
+        }
+        return p1;
+    }
+
+    void euclid() {
+        v1 = u(2055148518, false) * -1620382429; // encoder
+        v3 = new int[v1 * 908634763]; // decoder
     }
 
     int call(int a, int b) {
         System.out.println(a + ", " + b);
         return (a + b);
     }
-
 }

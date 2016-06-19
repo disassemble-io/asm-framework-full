@@ -2,66 +2,67 @@ package io.disassemble.asm.visitor.expr.node;
 
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-import static org.objectweb.asm.Opcodes.*;
+import java.util.Optional;
 
 /**
  * @author Tyler Sedlar
  * @since 6/16/16
+ *
+ * A BasicExpr that represents an equation.
  */
 public class MathExpr extends BasicExpr {
-
-    private BasicExpr expr1, expr2;
-
-    private FieldExpr field;
-    private ConstExpr constant;
 
     public MathExpr(AbstractInsnNode insn, int type) {
         super(insn, type);
     }
 
+    /**
+     * Retrieves the first expression in the equation.
+     *
+     * @return The first expression in the equation.
+     */
     public BasicExpr expr1() {
-        return expr1;
+        return children().get(0);
     }
 
+    /**
+     * Retrieves the second expression in the equation.
+     *
+     * @return The second expression in the equation.
+     */
     public BasicExpr expr2() {
-        return expr2;
+        return children().get(1);
     }
 
-    private void setFieldIfMatch(BasicExpr expr) {
-        if (expr.opcode() == GETFIELD || expr.opcode() == GETSTATIC ||
-                expr.opcode() == PUTFIELD || expr.opcode() == PUTSTATIC) {
-            field = (FieldExpr) expr;
+    /**
+     * Retrieves the field in this equation, if it exists.
+     *
+     * @return An Optional of the field in this equation, if it exists.
+     */
+    public Optional<FieldExpr> field() {
+        BasicExpr expr1 = expr1(), expr2 = expr2();
+        if (expr1 instanceof FieldExpr) {
+            return Optional.of((FieldExpr) expr1);
+        } else if (expr2 instanceof FieldExpr) {
+            return Optional.of((FieldExpr) expr2);
+        } else {
+            return Optional.empty();
         }
     }
 
-    private void setConstIfMatch(BasicExpr expr) {
-        if (expr.opcode() == LDC) {
-            constant = (ConstExpr) expr;
+    /**
+     * Retrieves the constant in this equation, if it exists.
+     *
+     * @return An Optional of the constant in this equation, if it exists.
+     */
+    public Optional<ConstExpr> constant() {
+        BasicExpr expr1 = expr1(), expr2 = expr2();
+        if (expr1 instanceof ConstExpr) {
+            return Optional.of((ConstExpr) expr1);
+        } else if (expr2 instanceof ConstExpr) {
+            return Optional.of((ConstExpr) expr2);
+        } else {
+            return Optional.empty();
         }
-    }
-
-    public void setExpressions(BasicExpr expr1, BasicExpr expr2) {
-        this.expr1 = expr1;
-        this.expr2 = expr2;
-        setFieldIfMatch(expr1);
-        setFieldIfMatch(expr2);
-        setConstIfMatch(expr1);
-        setConstIfMatch(expr2);
-    }
-
-    public FieldExpr field() {
-        return field;
-    }
-
-    public boolean hasField() {
-        return field != null;
-    }
-
-    public ConstExpr constant() {
-        return constant;
-    }
-
-    public boolean hasConstant() {
-        return constant != null;
     }
 }
