@@ -2,8 +2,11 @@ package io.disassemble.asm.visitor.expr;
 
 import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassMethod;
+import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
+import io.disassemble.asm.visitor.expr.node.MethodExpr;
 import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.FieldInsnNode;
 
 import java.util.*;
 
@@ -12,10 +15,12 @@ import static org.objectweb.asm.Opcodes.*;
 /**
  * @author Tyler Sedlar
  * @since 6/17/16
- *
+ * <p>
  * TODO: add WhileLoopExpr/ForLoopExpr
  */
 public class ExprTree implements Iterable<BasicExpr> {
+
+    public static final String VERBOSE_EXPRESSION_TREE = "ExprTree#VERBOSE_EXPRESSION_TREE";
 
     private static final Map<String, List<BasicExpr>> EXPRS = new HashMap<>();
 
@@ -90,9 +95,17 @@ public class ExprTree implements Iterable<BasicExpr> {
         return expressions.iterator();
     }
 
-    private static void handleExpr(Iterator<BasicExpr> itr, BasicExpr expr, BasicExpr parent) {
+    private static void handleExpr(Iterator<BasicExpr> itr, BasicExpr expr, BasicExpr parent, String indent) {
         if (parent != null) {
             parent.addChild(expr);
+        }
+        if (Boolean.parseBoolean(System.getProperty(VERBOSE_EXPRESSION_TREE))) {
+            if (expr.opcode() != -1) {
+                System.out.println(indent + Assembly.toString(expr.insn) + " (" + expr.proceeding() + "/" +
+                        CONSUMING_SIZES[expr.opcode()] + " / " + PRODUCING_SIZES[expr.opcode()] + ")");
+            } else {
+                System.out.println(indent + Assembly.toString(expr.insn) + " (" + expr.proceeding() + ")");
+            }
         }
         // the amount of instructions that need to be 'popped'
         int proceeding = expr.proceeding();
@@ -104,10 +117,11 @@ public class ExprTree implements Iterable<BasicExpr> {
                 child.setRight(prev);
                 prev.setLeft(child);
             }
-            handleExpr(itr, child, expr);
+            // recursively handle children
+            handleExpr(itr, child, expr, indent + "  ");
             prev = child;
             // determine the amount of instructions to skip
-            i += consume(expr.insn);
+            i += consume(expr, child.insn);
         }
     }
 
@@ -119,8 +133,15 @@ public class ExprTree implements Iterable<BasicExpr> {
      */
     public static Optional<ExprTree> build(ClassMethod method) {
         method.accept(EXPR_VISITOR);
+        boolean verbose = Boolean.parseBoolean(System.getProperty(VERBOSE_EXPRESSION_TREE));
+        if (verbose) {
+            System.out.println("Building " + method.key() + "......");
+        }
         Optional<ExprTree> treeOpt = build(EXPRS.get(method.key()));
         treeOpt.ifPresent(tree -> tree.method = method);
+        if (verbose) {
+            System.out.println();
+        }
         return treeOpt;
     }
 
@@ -166,7 +187,7 @@ public class ExprTree implements Iterable<BasicExpr> {
             }
             // recursively handle expressions, so if the next needs to pop more instructions off,
             // it can do so while handling heritage correctly.
-            handleExpr(itr, expr, null);
+            handleExpr(itr, expr, null, "");
             // add to the front of the Deque to accomodate for calling Collections#reverse
             exprs.addFirst(expr);
             prev = expr;
@@ -180,8 +201,21 @@ public class ExprTree implements Iterable<BasicExpr> {
      * @param insn The instruction to retrieve the consume size for.
      * @return The amount of instructions that should be consumed by the given instruction.
      */
-    private static int consume(AbstractInsnNode insn) {
+    private static int consume(BasicExpr parent, AbstractInsnNode insn) {
         int op = insn.getOpcode();
+        // longs and doubles take up two slots on the stack for consts + fields
+        // ^ these should *only* compute if its parent is a MethodExpr
+        if (parent instanceof MethodExpr) {
+            if (op == LCONST_0 || op == LCONST_1 || op == DCONST_0 || op == DCONST_1 || op == I2L ||
+                    op == F2L || op == D2L || op == L2D || op == F2D || op == I2D) {
+                return 1;
+            } else if (op == GETFIELD || op == GETSTATIC) {
+                FieldInsnNode fin = (FieldInsnNode) insn;
+                if (fin.desc.equals("J") || fin.desc.equals("D")) {
+                    return 1;
+                }
+            }
+        }
         if (op == DUP_X1 || op == DUP2) {
             return 2;
         } else if (op == DUP_X2 || op == DUP2_X1) {
@@ -191,4 +225,20 @@ public class ExprTree implements Iterable<BasicExpr> {
         }
         return 0;
     }
+
+    static int[] CONSUMING_SIZES = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2,
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 3, 4, 3, 3, 3, 3, 1, 2, 1, 2,
+            3, 2, 3, 4, 2, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 1, 2, 1, 2, 2, 3, 2, 3,
+            2, 3, 2, 4, 2, 4, 2, 4, 0, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 1, 1, 4, 2, 2, 4, 4, 1, 1, 1, 1,
+            1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
+            1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0};
+
+    static int[] PRODUCING_SIZES = {0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 0, 0, 1, 2, 1, 2,
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 2, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3,
+            4, 4, 5, 6, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
+            1, 2, 1, 2, 1, 2, 1, 2, 0, 2, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
+            1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
 }

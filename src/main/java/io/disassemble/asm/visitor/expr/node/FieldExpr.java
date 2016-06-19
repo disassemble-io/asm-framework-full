@@ -1,5 +1,6 @@
 package io.disassemble.asm.visitor.expr.node;
 
+import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.tree.FieldInsnNode;
 
 import static org.objectweb.asm.Opcodes.GETFIELD;
@@ -15,9 +16,9 @@ public class FieldExpr extends BasicExpr {
 
     private final FieldInsnNode field;
 
-    public FieldExpr(FieldInsnNode field, int type) {
-        super(field, type);
-        this.field = field;
+    public FieldExpr(ClassMethod method, FieldInsnNode insn, int type) {
+        super(method, insn, type);
+        this.field = insn;
     }
 
     /**

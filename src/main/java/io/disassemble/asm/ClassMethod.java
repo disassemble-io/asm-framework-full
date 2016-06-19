@@ -34,6 +34,7 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
  * @since 3/8/15
  */
 public class ClassMethod {
+
     private static final SimpleNanoPattern[] SIMPLE_NANO_PATTERNS = {
             new NoParameters(), new NoReturn(), new PrimitiveReturn(), new ClassReturn(), new ArrayReturn(), new Annotated(), new SpecifiesException(), // Structural
             new Chained(), new Recursive(), new SameName(), new Leaf(), // Calling
@@ -49,6 +50,8 @@ public class ClassMethod {
 
     public final ClassFactory owner;
     public final MethodNode method;
+
+    private Type[] types;
 
     private List<String> simpleNanoPatterns, advancedNanoPatterns;
 
@@ -113,6 +116,7 @@ public class ClassMethod {
      * @param desc The desc to set this method's desc to.
      */
     public void setDescriptor(String desc) {
+        types = null;
         method.desc = desc;
     }
 
@@ -325,6 +329,17 @@ public class ClassMethod {
         return true;
     }
 
+    /**
+     * Retrieves the types of this method's parameters.
+     *
+     * @return The types of this method's parameters.
+     */
+    public Type[] parameterTypes() {
+        if (types == null) {
+            types = Type.getArgumentTypes(desc());
+        }
+        return types;
+    }
 
     /**
      * Gets the amount of parameters in this method's desc.
@@ -332,7 +347,26 @@ public class ClassMethod {
      * @return The amount of parameters in this method's desc.
      */
     public int parameters() {
-        return Type.getArgumentTypes(desc()).length;
+        if (types == null) {
+            types = Type.getArgumentTypes(desc());
+        }
+        return types.length;
+    }
+
+    /**
+     * Fetches the descriptor of the parameter at the given index.
+     *
+     * @param index The index of the parameter to get.
+     * @return The descriptor of the parameter at the given index.
+     */
+    public String parameterAt(int index) {
+        if (types == null) {
+            types = Type.getArgumentTypes(desc());
+        }
+        if (index < 0 || index > types.length) {
+            throw new IndexOutOfBoundsException();
+        }
+        return types[index].getDescriptor();
     }
 
     /**

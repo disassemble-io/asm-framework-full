@@ -1,5 +1,6 @@
 package io.disassemble.asm.visitor.expr;
 
+import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -18,7 +19,7 @@ class ExpressionVisitor extends InterpretingVisitor {
     }
 
     private void handleInsn(AbstractInsnNode insn, int type) {
-        BasicExpr expr = BasicExpr.resolve(insn, type);
+        BasicExpr expr = BasicExpr.resolve(method, insn, type);
         visitExpr(expr);
         stack.add(expr);
     }

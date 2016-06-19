@@ -116,7 +116,8 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case NEWARRAY:
             case ANEWARRAY:
             case CHECKCAST:
-            case INSTANCEOF: {
+            case INSTANCEOF:
+            case DUP: {
                 visitNullaryOperation(current);
                 break;
             }
@@ -178,7 +179,6 @@ public class InterpretingVisitor extends ClassMethodVisitor {
             case FSTORE:
             case DSTORE:
             case ASTORE:
-            case DUP:
             case IRETURN:
             case LRETURN:
             case FRETURN:

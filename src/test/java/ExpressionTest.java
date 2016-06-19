@@ -18,12 +18,13 @@ import java.util.TreeSet;
 public class ExpressionTest {
 
     private static final String TEST_CLASS_NAME = "Sample";
-    private static final String TEST_JAR = ""; // "./src/test/excluded-java/res/jars/115.jar";
+    private static final String TEST_JAR = ""; //"./src/test/excluded-java/res/jars/115.jar";
 
     private static final Map<String, ClassFactory> classes = new HashMap<>();
 
     @BeforeClass
     public static void setup() {
+//        System.setProperty(ExprTree.VERBOSE_EXPRESSION_TREE, Boolean.toString(true));
         if (!TEST_CLASS_NAME.isEmpty()) {
             ClassScanner.scanClassPath(
                     cn -> cn.name.equals(TEST_CLASS_NAME),

@@ -9,6 +9,8 @@ public class Sample {
     private static int v1 = 10, v2 = 20;
     private static int[] v3;
 
+    private int v4 = 30;
+
     public void setter(int var) {
         this.var = var;
     }
@@ -87,14 +89,7 @@ public class Sample {
         }
     }
 
-    int u(int p1, boolean n) {
-//        return (p1 + (v1 * -33096101));
-//        return (n ? (p1 + (v1 * -33096101)) : (p1 + (v2 * 1521728277)));
-//        return (n ? (p1 < v1 ? (p1 + (v1 * -33096101)) : v1) : (p1 + (v2 * 1521728277)));
-        // IINC@var#3 (for) ISTORE@var#3 ICONST_0 (int i = 0)
-        // IF_ICMPGE var#3, var#1 (p1 >= i)
-        // ISUB var#1, var#3 (p1 - i)
-        // ISTORE #1 (@IINC#var) (p1 = ^)
+    int u(int p1) {
         for (int i = 0; i < p1; i++) {
             p1 -= i;
         }
@@ -102,7 +97,7 @@ public class Sample {
     }
 
     void euclid() {
-        v1 = u(2055148518, false) * -1620382429; // encoder
+        v1 = u(2055148518) * -1620382429; // encoder
         v3 = new int[v1 * 908634763]; // decoder
     }
 

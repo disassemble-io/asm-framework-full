@@ -1,5 +1,6 @@
 package io.disassemble.asm.visitor.expr.node;
 
+import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 /**
@@ -10,7 +11,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  */
 public class BranchExpr extends BasicExpr {
 
-    public BranchExpr(AbstractInsnNode insn, int type) {
-        super(insn, type);
+    public BranchExpr(ClassMethod method, AbstractInsnNode insn, int type) {
+        super(method, insn, type);
     }
 }

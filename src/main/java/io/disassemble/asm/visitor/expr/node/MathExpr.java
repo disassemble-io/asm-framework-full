@@ -1,5 +1,7 @@
 package io.disassemble.asm.visitor.expr.node;
 
+import io.disassemble.asm.ClassMethod;
+import io.disassemble.asm.util.Assembly;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
 import java.util.Optional;
@@ -12,8 +14,8 @@ import java.util.Optional;
  */
 public class MathExpr extends BasicExpr {
 
-    public MathExpr(AbstractInsnNode insn, int type) {
-        super(insn, type);
+    public MathExpr(ClassMethod method, AbstractInsnNode insn, int type) {
+        super(method, insn, type);
     }
 
     /**
@@ -31,7 +33,12 @@ public class MathExpr extends BasicExpr {
      * @return The second expression in the equation.
      */
     public BasicExpr expr2() {
-        return children().get(1);
+        try {
+            return children().get(1);
+        } catch (Exception e) {
+            System.out.println("IOOBE @ " + Assembly.toString(insn));
+            throw new ArrayIndexOutOfBoundsException();
+        }
     }
 
     /**

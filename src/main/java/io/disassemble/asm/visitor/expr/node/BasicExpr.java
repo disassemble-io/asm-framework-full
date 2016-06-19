@@ -1,5 +1,6 @@
 package io.disassemble.asm.visitor.expr.node;
 
+import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.util.IndexedDeque;
 import org.objectweb.asm.Type;
@@ -29,6 +30,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
     public static final int OP_TERNARY = 4;
     public static final int OP_UNARY = 5;
 
+    public final ClassMethod method;
     public final AbstractInsnNode insn;
     public final int type;
 
@@ -39,10 +41,12 @@ public class BasicExpr implements Iterable<BasicExpr> {
     /**
      * Constructs a BasicExpr for the given instruction and type.
      *
+     * @param method The method this expression is in.
      * @param insn The instruction to use.
      * @param type The type of expression.
      */
-    public BasicExpr(AbstractInsnNode insn, int type) {
+    public BasicExpr(ClassMethod method, AbstractInsnNode insn, int type) {
+        this.method = method;
         this.insn = insn;
         this.type = type;
     }
@@ -60,6 +64,17 @@ public class BasicExpr implements Iterable<BasicExpr> {
     public int proceeding() {
         switch (type) {
             case OP_UNARY: {
+                // Some IincInsnNode's denote i++, ++i, --i, i-- instead of a for loop.
+                // This is counteracted by checking if its #var is acting upon the method's parameter.
+                if (opcode() == IINC) {
+                    int var = ((IincInsnNode) insn).var;
+                    Type[] types = method.parameterTypes();
+                    // nonstatic methods include ALOAD_0, so this arg needs to be taken off in indexing.
+                    int arg = ((method.access() & ACC_STATIC) == 0 ? (var - 1) : var);
+                    if (arg < types.length) {
+                        return 0;
+                    }
+                }
                 return 1;
             }
             case OP_BINARY: {
@@ -72,9 +87,9 @@ public class BasicExpr implements Iterable<BasicExpr> {
                 return 4;
             }
             case OP_NARY: {
-                boolean loadVar = (opcode() == INVOKEVIRTUAL || opcode() == INVOKESPECIAL);
-                if (loadVar || opcode() == INVOKEVIRTUAL || opcode() == INVOKEINTERFACE ||
-                        opcode() == INVOKESPECIAL) {
+                boolean loadVar = (opcode() == INVOKEVIRTUAL || opcode() == INVOKESPECIAL ||
+                        opcode() == INVOKEINTERFACE);
+                if (loadVar || opcode() == INVOKESTATIC || opcode() == INVOKEDYNAMIC) {
                     String desc = ((MethodInsnNode) insn).desc;
                     int sizes = Type.getArgumentsAndReturnSizes(desc);
                     // argSize = (sizes >> 2)
@@ -190,20 +205,28 @@ public class BasicExpr implements Iterable<BasicExpr> {
     /**
      * Constructs the respective BasicExpr for the given instruction and type.
      *
+     * @param method The method the given instruction belongs to.
      * @param insn The instruction to resolve.
      * @param type The type of expression.
      * @return The respective BasicExpr for the given instruction and type.
      */
-    public static BasicExpr resolve(AbstractInsnNode insn, int type) {
+    public static BasicExpr resolve(ClassMethod method, AbstractInsnNode insn, int type) {
         switch (insn.getOpcode()) {
             case GETFIELD:
             case GETSTATIC:
             case PUTFIELD:
             case PUTSTATIC: {
-                return new FieldExpr((FieldInsnNode) insn, type);
+                return new FieldExpr(method, (FieldInsnNode) insn, type);
+            }
+            case INVOKEINTERFACE:
+            case INVOKEVIRTUAL:
+            case INVOKESPECIAL:
+            case INVOKESTATIC:
+            case INVOKEDYNAMIC: {
+                return new MethodExpr(method, (MethodInsnNode) insn, type);
             }
             case LDC: {
-                return new ConstExpr((LdcInsnNode) insn, type);
+                return new ConstExpr(method, (LdcInsnNode) insn, type);
             }
             case IADD:
             case LADD:
@@ -237,7 +260,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case LOR:
             case IXOR:
             case LXOR: {
-                return new MathExpr(insn, type);
+                return new MathExpr(method, insn, type);
             }
             case IF_ICMPEQ:
             case IF_ICMPNE:
@@ -247,7 +270,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IF_ICMPLE:
             case IF_ACMPEQ:
             case IF_ACMPNE: {
-                return new CompBranchExpr(insn, type);
+                return new CompBranchExpr(method, insn, type);
             }
             case IFEQ:
             case IFNE:
@@ -257,10 +280,10 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IFLE:
             case IFNULL:
             case IFNONNULL: {
-                return new BranchExpr(insn, type);
+                return new BranchExpr(method, insn, type);
             }
             default: {
-                return new BasicExpr(insn, type);
+                return new BasicExpr(method, insn, type);
             }
         }
     }

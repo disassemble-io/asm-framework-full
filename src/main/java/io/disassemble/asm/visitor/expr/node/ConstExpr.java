@@ -1,5 +1,6 @@
 package io.disassemble.asm.visitor.expr.node;
 
+import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.tree.LdcInsnNode;
 
 /**
@@ -12,8 +13,8 @@ public class ConstExpr extends BasicExpr {
 
     private final LdcInsnNode ldc;
 
-    public ConstExpr(LdcInsnNode ldc, int type) {
-        super(ldc, type);
+    public ConstExpr(ClassMethod method, LdcInsnNode ldc, int type) {
+        super(method, ldc, type);
         this.ldc = ldc;
     }
 
