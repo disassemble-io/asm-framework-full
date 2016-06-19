@@ -169,7 +169,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
      *
      * @return This expression as its source counterpart.
      */
-    public String compile() {
+    public String decompile() {
         throw new IllegalStateException("[" + Assembly.toString(insn) + "] could not be compiled.");
     }
 
