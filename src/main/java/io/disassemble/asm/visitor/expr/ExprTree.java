@@ -34,7 +34,7 @@ public class ExprTree implements Iterable<BasicExpr> {
     private ClassMethod method;
 
     /**
-     * Constructs an ExprTree based on the Deque<BasicExpr> parameter.
+     * Constructs an ExprTree based on the given expressions.
      *
      * @param expressions The expressions to build an ExprTree for.
      */
@@ -43,9 +43,9 @@ public class ExprTree implements Iterable<BasicExpr> {
     }
 
     /**
-     * Retrieves the Deque<BasicExpr> used to construct this ExprTree.
+     * Retrieves the expressions used to construct this ExprTree.
      *
-     * @return The Deque<BasicExpr> used to construct this ExprTree.
+     * @return The expression used to construct this ExprTree.
      */
     public Deque<BasicExpr> expressions() {
         return expressions;

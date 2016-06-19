@@ -32,7 +32,7 @@ public class FieldExpr extends BasicExpr {
     /**
      * Checks whether this field is a GETFIELD or GETSTATIC instruction.
      *
-     * @return <t>true</t> if this field is a GETFIELD or GETSTATIC instruction, otherwise <t>false</t>.
+     * @return <tt>true</tt> if this field is a GETFIELD or GETSTATIC instruction, otherwise <tt>false</tt>.
      */
     public boolean getter() {
         return (opcode() == GETFIELD || opcode() == GETSTATIC);
@@ -41,7 +41,7 @@ public class FieldExpr extends BasicExpr {
     /**
      * Checks whether this field is a PUTFIELD or PUTSTATIC instruction.
      *
-     * @return <t>true</t> if this field is a PUTFIELD or PUTSTATIC instruction, otherwise <t>false</t>.
+     * @return <tt>true</tt> if this field is a PUTFIELD or PUTSTATIC instruction, otherwise <tt>false</tt>.
      */
     public boolean putter() {
         return !getter();

@@ -20,7 +20,7 @@ public class ConstExpr extends BasicExpr {
     /**
      * Checks whether this constant is a number or not.
      *
-     * @return <t>true</t> if this constant is a number, otherwise <t>false</t>.
+     * @return <tt>true</tt> if this constant is a number, otherwise <tt>false</tt>.
      */
     public boolean isNumber() {
         return ldc.cst instanceof Number;
@@ -29,7 +29,7 @@ public class ConstExpr extends BasicExpr {
     /**
      * Gets the number of this constant if it exists, otherwise null.
      *
-     * @return The number of this constant if it exists, otherwise <t>null</t>.
+     * @return The number of this constant if it exists, otherwise <tt>null</tt>.
      */
     public Number number() {
         if (!isNumber()) {
