@@ -2,4 +2,4 @@ language: java
 jdk:
   - oraclejdk8
 install: mvn install -Dmaven.javadoc.skip=false -DskipTests=true --batch-mode --show-version
-script: mvn test javadoc:jar --batch-mode
+script: mvn test -DskipTests=true javadoc:jar --batch-mode
