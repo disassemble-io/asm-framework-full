@@ -197,6 +197,19 @@ public class ClassMethod {
     }
 
     /**
+     * Obtains a method in the given factory class matching the name and descriptor of this method.
+     *
+     * @param factory The factory to resolve as.
+     * @return A method in the given factory class matching the name and descriptor of this method.
+     */
+    public ClassMethod resolveTo(ClassFactory factory) {
+        if (factory == null) {
+            return null;
+        }
+        return factory.findMethod(cm -> cm.name().equals(name()) && cm.desc().equals(desc()));
+    }
+
+    /**
      * Gets the methods that call this method.
      *
      * @param classes The ClassFactory map to search.

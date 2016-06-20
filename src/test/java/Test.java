@@ -5,13 +5,6 @@ import java.math.BigInteger;
  */
 public class Test {
 
-    private class BigNumber extends BigInteger {
-
-        public BigNumber(String val) {
-            super(val);
-        }
-    }
-
     @org.junit.Test
     @SuppressWarnings("all")
     public void testEuclid() {

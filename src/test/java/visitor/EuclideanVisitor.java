@@ -8,7 +8,10 @@ import io.disassemble.asm.visitor.expr.node.MathExpr;
 import org.objectweb.asm.tree.LabelNode;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -104,6 +107,11 @@ public class EuclideanVisitor extends ExprTreeVisitor {
             } else if (l2 == null && l == null && r == null) {
                 weight = 0.1D;
             }
+        } else if (field.right() != null) {
+            BasicExpr r = field.right();
+            if (r.opcode() == GOTO) {
+                return;
+            }
         }
         Number mult = expr.number();
         boolean isLong = (mult instanceof Long);
@@ -120,6 +128,15 @@ public class EuclideanVisitor extends ExprTreeVisitor {
             }
             if (!weights.containsKey(mult)) {
                 weights.put(mult, 0D);
+            }
+            if (field.key().equals("ck.y")) {
+                System.out.println("ck.y --> " + mult + " (" + weight + "/" + field.getter() + ")");
+                if (!field.getter()) {
+                    System.out.println("-----------");
+                    field.left().print();
+                    field.print();
+                    System.out.println("-----------");
+                }
             }
             weights.put(mult, weights.get(mult) + weight);
         }

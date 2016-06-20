@@ -1,4 +1,5 @@
 import io.disassemble.asm.ClassFactory;
+import io.disassemble.asm.ClassField;
 import io.disassemble.asm.JarArchive;
 import io.disassemble.asm.visitor.expr.ExprTree;
 import org.junit.BeforeClass;
@@ -17,8 +18,8 @@ import java.util.TreeSet;
  */
 public class ExpressionTest {
 
-    private static final String TEST_CLASS_NAME = "Sample";
-    private static final String TEST_JAR = ""; //"./src/test/excluded-java/res/jars/115.jar";
+    private static final String TEST_CLASS_NAME = "";//"Sample";
+    private static final String TEST_JAR = "./src/test/excluded-java/res/jars/116-deob.jar";
 
     private static final Map<String, ClassFactory> classes = new HashMap<>();
 
@@ -65,5 +66,14 @@ public class ExpressionTest {
         System.out.printf("found %s multipliers in %.4f seconds\n", matched.size(), (end - start) / 1e9);
         new TreeSet<>(matched.keySet())
                 .forEach(key -> System.out.println(key + " * " + matched.get(key)));
+        classes.forEach((key, factory) -> {
+            for (ClassField field : factory.fields) {
+                if (field.desc().equals("I") || field.desc().equals("J")) {
+                    if (!matched.containsKey(field.key())) {
+                        System.out.println(field.key() + " * 1");
+                    }
+                }
+            }
+        });
     }
 }
