@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
  *
  * A BasicExpr that represents a constant.
  */
-public class ConstExpr extends BasicExpr {
+public class ConstExpr extends BasicExpr<LdcInsnNode> {
 
     private final LdcInsnNode ldc;
 

@@ -14,7 +14,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Tyler Sedlar
  * @since 6/16/16
  */
-public class BasicExpr implements Iterable<BasicExpr> {
+public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr> {
 
     /**
      * An indexed string representation of expression types.
@@ -31,8 +31,9 @@ public class BasicExpr implements Iterable<BasicExpr> {
     public static final int OP_UNARY = 5;
 
     public final ClassMethod method;
-    public final AbstractInsnNode insn;
     public final int type;
+
+    protected final T insn;
 
     private BasicExpr left, right, parent;
 
@@ -45,10 +46,19 @@ public class BasicExpr implements Iterable<BasicExpr> {
      * @param insn The instruction to use.
      * @param type The type of expression.
      */
-    public BasicExpr(ClassMethod method, AbstractInsnNode insn, int type) {
+    public BasicExpr(ClassMethod method, T insn, int type) {
         this.method = method;
         this.insn = insn;
         this.type = type;
+    }
+
+    /**
+     * Retrieves the base instruction for this expression.
+     *
+     * @return The base instruction for this expression.
+     */
+    public T insn() {
+        return insn;
     }
 
     @Override
@@ -270,7 +280,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IF_ICMPLE:
             case IF_ACMPEQ:
             case IF_ACMPNE: {
-                return new CompBranchExpr(method, insn, type);
+                return new CompBranchExpr(method, (JumpInsnNode) insn, type);
             }
             case IFEQ:
             case IFNE:
@@ -280,10 +290,27 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IFLE:
             case IFNULL:
             case IFNONNULL: {
-                return new BranchExpr(method, insn, type);
+                return new BranchExpr(method, (JumpInsnNode) insn, type);
+            }
+            case ILOAD:
+            case DLOAD:
+            case FLOAD:
+            case LLOAD:
+            case ALOAD: {
+                return new VarLoadExpr(method, (VarInsnNode) insn, type);
+            }
+            case ISTORE:
+            case DSTORE:
+            case FSTORE:
+            case LSTORE:
+            case ASTORE: {
+                return new VarStoreExpr(method, (VarInsnNode) insn, type);
+            }
+            case RET: {
+                return new VarExpr(method, (VarInsnNode) insn, type);
             }
             default: {
-                return new BasicExpr(method, insn, type);
+                return new BasicExpr<>(method, insn, type);
             }
         }
     }

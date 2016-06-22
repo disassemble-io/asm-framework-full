@@ -1,7 +1,7 @@
 package io.disassemble.asm.visitor.expr.node;
 
 import io.disassemble.asm.ClassMethod;
-import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.JumpInsnNode;
 
 /**
  * @author Tyler Sedlar
@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  */
 public class CompBranchExpr extends BranchExpr {
 
-    public CompBranchExpr(ClassMethod method, AbstractInsnNode insn, int type) {
+    public CompBranchExpr(ClassMethod method, JumpInsnNode insn, int type) {
         super(method, insn, type);
     }
 }

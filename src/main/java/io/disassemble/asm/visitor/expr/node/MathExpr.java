@@ -12,7 +12,7 @@ import java.util.Optional;
  *
  * A BasicExpr that represents an equation.
  */
-public class MathExpr extends BasicExpr {
+public class MathExpr extends BasicExpr<AbstractInsnNode> {
 
     public MathExpr(ClassMethod method, AbstractInsnNode insn, int type) {
         super(method, insn, type);
@@ -36,7 +36,7 @@ public class MathExpr extends BasicExpr {
         try {
             return children().get(1);
         } catch (Exception e) {
-            System.out.println("IOOBE @ " + Assembly.toString(insn));
+            System.out.println("IOOBE @ " + Assembly.toString(insn()));
             throw new ArrayIndexOutOfBoundsException();
         }
     }

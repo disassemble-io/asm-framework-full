@@ -100,9 +100,9 @@ public class EuclideanVisitor extends ExprTreeVisitor {
             }
             // The following are not 'stable,' but do have some valid multipliers.
             // They're weighted lower than a standard pattern mult.
-            if (l2 != null && (l2.opcode() == GOTO || l2.insn instanceof LabelNode)) {
+            if (l2 != null && (l2.opcode() == GOTO || l2.insn() instanceof LabelNode)) {
                 weight = 0.25D;
-            } else if (r != null && (r.opcode() == GOTO || r.insn instanceof LabelNode)) {
+            } else if (r != null && (r.opcode() == GOTO || r.insn() instanceof LabelNode)) {
                 weight = 0.25D;
             } else if (l2 == null && l == null && r == null) {
                 weight = 0.1D;
@@ -128,15 +128,6 @@ public class EuclideanVisitor extends ExprTreeVisitor {
             }
             if (!weights.containsKey(mult)) {
                 weights.put(mult, 0D);
-            }
-            if (field.key().equals("ck.y")) {
-                System.out.println("ck.y --> " + mult + " (" + weight + "/" + field.getter() + ")");
-                if (!field.getter()) {
-                    System.out.println("-----------");
-                    field.left().print();
-                    field.print();
-                    System.out.println("-----------");
-                }
             }
             weights.put(mult, weights.get(mult) + weight);
         }

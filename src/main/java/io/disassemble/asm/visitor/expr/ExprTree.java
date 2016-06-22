@@ -18,14 +18,14 @@ import static org.objectweb.asm.Opcodes.*;
  * <p>
  * TODO: add WhileLoopExpr/ForLoopExpr
  */
-public class ExprTree implements Iterable<BasicExpr> {
+public class ExprTree implements Iterable<BasicExpr<AbstractInsnNode>> {
 
     public static final String VERBOSE_EXPRESSION_TREE = "ExprTree#VERBOSE_EXPRESSION_TREE";
 
-    private static final Map<String, List<BasicExpr>> EXPRS = new HashMap<>();
+    private static final Map<String, List<BasicExpr<AbstractInsnNode>>> EXPRS = new HashMap<>();
 
     private static final ExpressionVisitor EXPR_VISITOR = new ExpressionVisitor() {
-        public void visitExpr(BasicExpr expr) {
+        public void visitExpr(BasicExpr<AbstractInsnNode> expr) {
             String key = method.key();
             if (!EXPRS.containsKey(key)) {
                 EXPRS.put(key, new ArrayList<>());
@@ -34,7 +34,7 @@ public class ExprTree implements Iterable<BasicExpr> {
         }
     };
 
-    private final Deque<BasicExpr> expressions;
+    private final Deque<BasicExpr<AbstractInsnNode>> expressions;
 
     private ClassMethod method;
 
@@ -43,7 +43,7 @@ public class ExprTree implements Iterable<BasicExpr> {
      *
      * @param expressions The expressions to build an ExprTree for.
      */
-    public ExprTree(Deque<BasicExpr> expressions) {
+    public ExprTree(Deque<BasicExpr<AbstractInsnNode>> expressions) {
         this.expressions = expressions;
     }
 
@@ -52,7 +52,7 @@ public class ExprTree implements Iterable<BasicExpr> {
      *
      * @return The expression used to construct this ExprTree.
      */
-    public Deque<BasicExpr> expressions() {
+    public Deque<BasicExpr<AbstractInsnNode>> expressions() {
         return expressions;
     }
 
@@ -72,11 +72,10 @@ public class ExprTree implements Iterable<BasicExpr> {
         expressions.forEach(BasicExpr::print);
     }
 
-    private void accept(ExprTreeVisitor visitor, BasicExpr parent) {
+    @SuppressWarnings("unchecked")
+    private void accept(ExprTreeVisitor visitor, BasicExpr<AbstractInsnNode> parent) {
         visitor.visitExpr(parent);
-        for (BasicExpr child : parent) {
-            accept(visitor, child);
-        }
+        parent.forEach(expr -> accept(visitor, expr));
     }
 
     /**
@@ -85,33 +84,31 @@ public class ExprTree implements Iterable<BasicExpr> {
      * @param visitor The visitor to dispatch.
      */
     public void accept(ExprTreeVisitor visitor) {
-        for (BasicExpr expr : this) {
+        visitor.visitStart(this);
+        for (BasicExpr<AbstractInsnNode> expr : this) {
             accept(visitor, expr);
         }
+        visitor.visitEnd(this);
     }
 
     @Override
-    public Iterator<BasicExpr> iterator() {
+    public Iterator<BasicExpr<AbstractInsnNode>> iterator() {
         return expressions.iterator();
     }
 
-    private static void handleExpr(Iterator<BasicExpr> itr, BasicExpr expr, BasicExpr parent, String indent) {
+    private static void handleExpr(Iterator<BasicExpr<AbstractInsnNode>> itr, BasicExpr<AbstractInsnNode> expr,
+                                   BasicExpr<AbstractInsnNode> parent, String indent) {
         if (parent != null) {
             parent.addChild(expr);
         }
         if (Boolean.parseBoolean(System.getProperty(VERBOSE_EXPRESSION_TREE))) {
-            if (expr.opcode() != -1) {
-                System.out.println(indent + Assembly.toString(expr.insn) + " (" + expr.proceeding() + "/" +
-                        CONSUMING_SIZES[expr.opcode()] + " / " + PRODUCING_SIZES[expr.opcode()] + ")");
-            } else {
-                System.out.println(indent + Assembly.toString(expr.insn) + " (" + expr.proceeding() + ")");
-            }
+            System.out.println(indent + Assembly.toString(expr.insn()) + " (" + expr.proceeding() + ")");
         }
         // the amount of instructions that need to be 'popped'
         int proceeding = expr.proceeding();
-        BasicExpr prev = null;
+        BasicExpr<AbstractInsnNode> prev = null;
         for (int i = 0; i < proceeding; i++) {
-            BasicExpr child = itr.next();
+            BasicExpr<AbstractInsnNode> child = itr.next();
             if (prev != null) {
                 // setRight/setLeft instead of setLeft/setRight due to Collections#reverse in #build
                 child.setRight(prev);
@@ -121,7 +118,7 @@ public class ExprTree implements Iterable<BasicExpr> {
             handleExpr(itr, child, expr, indent + "  ");
             prev = child;
             // determine the amount of instructions to skip
-            i += consume(expr, child.insn);
+            i += consume(expr, child.insn());
         }
     }
 
@@ -169,17 +166,17 @@ public class ExprTree implements Iterable<BasicExpr> {
      * @param exprList The list of BasicExpr to build an ExprTree for.
      * @return An Optional for the built tree, if it exists, otherwise an empty value.
      */
-    private static Optional<ExprTree> build(List<BasicExpr> exprList) {
+    private static Optional<ExprTree> build(List<BasicExpr<AbstractInsnNode>> exprList) {
         if (exprList == null) {
             return Optional.empty();
         }
         // Reverse the list to handle instructions by 'stack' order.
         Collections.reverse(exprList);
-        Iterator<BasicExpr> itr = exprList.iterator();
-        Deque<BasicExpr> exprs = new ArrayDeque<>();
+        Iterator<BasicExpr<AbstractInsnNode>> itr = exprList.iterator();
+        Deque<BasicExpr<AbstractInsnNode>> exprs = new ArrayDeque<>();
         BasicExpr prev = null;
         while (itr.hasNext()) {
-            BasicExpr expr = itr.next();
+            BasicExpr<AbstractInsnNode> expr = itr.next();
             if (prev != null) {
                 // setRight/setLeft instead of setLeft/setRight due to Collections#reverse
                 expr.setRight(prev);
@@ -188,7 +185,7 @@ public class ExprTree implements Iterable<BasicExpr> {
             // recursively handle expressions, so if the next needs to pop more instructions off,
             // it can do so while handling heritage correctly.
             handleExpr(itr, expr, null, "");
-            // add to the front of the Deque to accomodate for calling Collections#reverse
+            // add to the front of the Deque to accommodate for calling Collections#reverse
             exprs.addFirst(expr);
             prev = expr;
         }
@@ -225,20 +222,4 @@ public class ExprTree implements Iterable<BasicExpr> {
         }
         return 0;
     }
-
-    static int[] CONSUMING_SIZES = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 1, 2,
-            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 4, 3, 4, 3, 3, 3, 3, 1, 2, 1, 2,
-            3, 2, 3, 4, 2, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 1, 2, 1, 2, 2, 3, 2, 3,
-            2, 3, 2, 4, 2, 4, 2, 4, 0, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 1, 1, 1, 4, 2, 2, 4, 4, 1, 1, 1, 1,
-            1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 1, 1, 1, 2, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-            1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0};
-
-    static int[] PRODUCING_SIZES = {0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 2, 2, 1, 1, 1, 0, 0, 1, 2, 1, 2,
-            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 2, 1, 1, 1, 1, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3,
-            4, 4, 5, 6, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2,
-            1, 2, 1, 2, 1, 2, 1, 2, 0, 2, 1, 2, 1, 1, 2, 1, 2, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1,
-            1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0};
 }

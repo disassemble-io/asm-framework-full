@@ -12,7 +12,7 @@ import static org.objectweb.asm.Opcodes.GETSTATIC;
  *
  * A BasicExpr that represents a field.
  */
-public class FieldExpr extends BasicExpr {
+public class FieldExpr extends MemberExpr<FieldInsnNode> {
 
     private final FieldInsnNode field;
 
@@ -21,11 +21,7 @@ public class FieldExpr extends BasicExpr {
         this.field = insn;
     }
 
-    /**
-     * Retrieves this field's reference key. (owner.field)
-     *
-     * @return This field's reference key.
-     */
+    @Override
     public String key() {
         return (field.owner + "." + field.name);
     }

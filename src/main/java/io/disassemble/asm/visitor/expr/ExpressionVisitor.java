@@ -1,6 +1,5 @@
 package io.disassemble.asm.visitor.expr;
 
-import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
@@ -13,13 +12,14 @@ import java.util.Deque;
  */
 class ExpressionVisitor extends InterpretingVisitor {
 
-    private Deque<BasicExpr> stack = new ArrayDeque<>();
+    private Deque<BasicExpr<AbstractInsnNode>> stack = new ArrayDeque<>();
 
-    public void visitExpr(BasicExpr stack) {
+    public void visitExpr(BasicExpr<AbstractInsnNode> stack) {
     }
 
+    @SuppressWarnings("unchecked")
     private void handleInsn(AbstractInsnNode insn, int type) {
-        BasicExpr expr = BasicExpr.resolve(method, insn, type);
+        BasicExpr<AbstractInsnNode> expr = BasicExpr.resolve(method, insn, type);
         visitExpr(expr);
         stack.add(expr);
     }

@@ -24,6 +24,12 @@ public class ExprTreeVisitor {
             visitCompBranchExpr((CompBranchExpr) expr);
         } else if (expr instanceof BranchExpr) {
             visitBranchExpr((BranchExpr) expr);
+        } else if (expr instanceof VarLoadExpr) {
+            visitVarLoadExpr((VarLoadExpr) expr);
+        } else if (expr instanceof VarStoreExpr) {
+            visitVarStoreExpr((VarStoreExpr) expr);
+        } else if (expr instanceof VarExpr) {
+            visitVarExpr((VarExpr) expr);
         } else {
             visitBasicExpr(expr);
         }
@@ -75,5 +81,45 @@ public class ExprTreeVisitor {
      * @param expr The expression to be visited.
      */
     public void visitBranchExpr(BranchExpr expr) {
+    }
+
+    /**
+     * Visits a VarLoadExpr.
+     *
+     * @param expr The expression to be visited.
+     */
+    public void visitVarLoadExpr(VarLoadExpr expr) {
+    }
+
+    /**
+     * Visits a VarStoreExpr.
+     *
+     * @param expr The expression to be visited.
+     */
+    public void visitVarStoreExpr(VarStoreExpr expr) {
+    }
+
+    /**
+     * Visits a VarExpr.
+     *
+     * @param expr The expression to be visited.
+     */
+    public void visitVarExpr(VarExpr expr) {
+    }
+
+    /**
+     * Callable upon the beginning of visiting an ExprTree.
+     *
+     * @param tree The tree that is currently being visited.
+     */
+    public void visitStart(ExprTree tree) {
+    }
+
+    /**
+     * Callable upon the end of visiting an ExprTree.
+     *
+     * @param tree The tree that is currently being visited.
+     */
+    public void visitEnd(ExprTree tree) {
     }
 }
