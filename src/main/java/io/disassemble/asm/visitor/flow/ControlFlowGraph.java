@@ -12,8 +12,6 @@ import java.util.List;
  */
 public class ControlFlowGraph {
 
-    private static final FlowVisitor VISITOR = new FlowVisitor();
-
     protected final List<BasicBlock> blocks = new ArrayList<>();
 
     public final ClassMethod method;
@@ -63,8 +61,9 @@ public class ControlFlowGraph {
      */
     public static ControlFlowGraph create(ClassMethod method) {
         ControlFlowGraph graph = new ControlFlowGraph(method);
-        VISITOR.setGraph(graph);
-        method.accept(VISITOR);
+        FlowVisitor visitor = new FlowVisitor();
+        visitor.setGraph(graph);
+        method.accept(visitor);
         return graph;
     }
 }
