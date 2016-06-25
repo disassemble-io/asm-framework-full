@@ -36,9 +36,9 @@ public class Sample {
     void t(int var1) {
         /**
          * Any stack segment should be iterated in reverse.
-         * - If a unary/binary expr is hit, it should start a new tree.
+         * - If a unary/binary type is hit, it should start a new tree.
          *  - POP 'X' amount of previous instructions to the new tree.
-         *  - If the expr right before is a unary/binary expr, it should start a new inner tree.
+         *  - If the type right before is a unary/binary type, it should start a new inner tree.
          *   - This should let the parent tree POP again. As if it never originally did.
          *  - any other instructions should be added to the 'root.'
          * - After a full iteration, the root trees should be sorted in reverse.

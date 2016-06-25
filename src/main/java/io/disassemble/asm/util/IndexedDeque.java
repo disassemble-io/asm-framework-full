@@ -21,9 +21,9 @@ import java.util.function.Consumer;
  */
 public class IndexedDeque<E> extends AbstractCollection<E> implements Deque<E>, Cloneable, Serializable {
 
-    private transient Object[] elements;
+    public transient Object[] elements;
 
-    private transient int head;
+    public transient int head;
     private transient int tail;
 
     private static final int MIN_INITIAL_CAPACITY = 8;
@@ -207,7 +207,7 @@ public class IndexedDeque<E> extends AbstractCollection<E> implements Deque<E>, 
     @SuppressWarnings("unchecked")
     public E get(int index) {
         if (head + index < head || head + index >= elements.length) {
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException((head + index) + "/" + elements.length);
         }
         return (E) elements[head + index];
     }

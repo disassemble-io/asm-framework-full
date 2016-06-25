@@ -2,6 +2,7 @@ import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassField;
 import io.disassemble.asm.JarArchive;
 import io.disassemble.asm.visitor.expr.ExprTree;
+import io.disassemble.asm.visitor.expr.ExprTreeBuilder;
 import io.disassemble.asm.visitor.expr.MultiExprTreeVisitor;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -10,6 +11,8 @@ import visitor.ParameterVisitor;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Tyler Sedlar
@@ -20,12 +23,13 @@ public class ExpressionTest {
     private static final String TEST_CLASS_NAME = "";//"Sample";
     private static final String TEST_JAR = "./src/test/excluded-java/res/jars/116.jar";
 
-    private static final Map<String, ClassFactory> classes = new HashMap<>();
+    private ConcurrentMap<String, ClassFactory> classes;
 
     @BeforeClass
-    public static void setup() {
+    public void setup() {
 //        System.setProperty(ExprTree.VERBOSE_EXPRESSION_TREE, Boolean.toString(true));
         if (!TEST_CLASS_NAME.isEmpty()) {
+            classes = new ConcurrentHashMap<>();
             ClassScanner.scanClassPath(
                     cn -> cn.name.equals(TEST_CLASS_NAME),
                     cm -> {
@@ -42,7 +46,7 @@ public class ExpressionTest {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            classes.putAll(archive.classes());
+            classes = archive.classes();
         }
     }
 
@@ -51,7 +55,7 @@ public class ExpressionTest {
         Map<String, Deque<ExprTree>> trees = new HashMap<>();
 
         long start = System.nanoTime();
-        trees.putAll(ExprTree.buildAll(classes));
+        trees.putAll(ExprTreeBuilder.buildAll(classes));
         long end = System.nanoTime();
 
         System.out.printf("trees built in %.4f seconds\n", (end - start) / 1e9);
@@ -73,7 +77,7 @@ public class ExpressionTest {
         end = System.nanoTime();
 
         System.out.printf("matched %s multipliers in %.4f seconds\n", matched.size(), (end - start) / 1e9);
-        
+
         System.out.printf("removed %s unused parameters\n", param.removed());
 
 //        new TreeSet<>(matched.keySet())

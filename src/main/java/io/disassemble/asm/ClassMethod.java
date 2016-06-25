@@ -16,6 +16,8 @@ import io.disassemble.asm.pattern.nano.oop.ObjectCreator;
 import io.disassemble.asm.pattern.nano.oop.TypeManipulator;
 import io.disassemble.asm.pattern.nano.structural.*;
 import io.disassemble.asm.util.Assembly;
+import io.disassemble.asm.visitor.expr.ExprTree;
+import io.disassemble.asm.visitor.expr.ExprTreeBuilder;
 import io.disassemble.asm.visitor.flow.ControlFlowGraph;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
@@ -56,6 +58,7 @@ public class ClassMethod {
     private List<String> simpleNanoPatterns, advancedNanoPatterns;
 
     private ControlFlowGraph cfg;
+    private ExprTree tree;
 
     public ClassMethod(ClassFactory owner, MethodNode method) {
         this.owner = owner;
@@ -393,6 +396,36 @@ public class ClassMethod {
             cfg = ControlFlowGraph.create(this);
         }
         return Optional.ofNullable(cfg);
+    }
+
+    /**
+     * Creates an ExprTree for this method.
+     * <p>
+     * This should not be used if speed is an issue, but used in parallel building.
+     *
+     * @param cached Retrieve by cache, if the tree has been built before.
+     * @return An ExprTree for this method.
+     */
+    public Optional<ExprTree> tree(boolean cached) {
+        if (!cached || tree == null) {
+            Optional<ExprTree> opt = ExprTreeBuilder.build(this);
+            if (cached && opt.isPresent()) {
+                tree = opt.get();
+            }
+            return opt;
+        }
+        return Optional.of(tree);
+    }
+
+    /**
+     * Creates an ExprTree for this method.
+     * <p>
+     * This should not be used if speed is an issue, but used in parallel building.
+     *
+     * @return An ExprTree for this method.
+     */
+    public Optional<ExprTree> tree() {
+        return tree(false);
     }
 
     /**

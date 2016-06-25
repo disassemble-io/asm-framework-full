@@ -20,6 +20,8 @@ public class ExprTreeVisitor {
             visitConstExpr((ConstExpr) expr);
         } else if (expr instanceof FieldExpr) {
             visitFieldExpr((FieldExpr) expr);
+        } else if (expr instanceof MethodExpr) {
+            visitMethodExpr((MethodExpr) expr);
         } else if (expr instanceof CompBranchExpr) {
             visitCompBranchExpr((CompBranchExpr) expr);
         } else if (expr instanceof BranchExpr) {
@@ -65,6 +67,14 @@ public class ExprTreeVisitor {
      * @param expr The expression to be visited.
      */
     public void visitFieldExpr(FieldExpr expr) {
+    }
+
+    /**
+     * Visits a MethodExpr.
+     *
+     * @param expr The expression to be visited.
+     */
+    public void visitMethodExpr(MethodExpr expr) {
     }
 
     /**

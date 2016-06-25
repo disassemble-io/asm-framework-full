@@ -14,16 +14,28 @@ import static org.objectweb.asm.Opcodes.GETSTATIC;
  */
 public class FieldExpr extends MemberExpr<FieldInsnNode> {
 
-    private final FieldInsnNode field;
-
     public FieldExpr(ClassMethod method, FieldInsnNode insn, int type) {
         super(method, insn, type);
-        this.field = insn;
     }
 
     @Override
     public String key() {
-        return (field.owner + "." + field.name);
+        return (insn.owner + "." + insn.name);
+    }
+
+    @Override
+    public String owner() {
+        return insn.owner;
+    }
+
+    @Override
+    public String name() {
+        return insn.name;
+    }
+
+    @Override
+    public String desc() {
+        return insn.desc;
     }
 
     /**
