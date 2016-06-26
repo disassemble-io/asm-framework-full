@@ -313,6 +313,17 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case RET: {
                 return new VarExpr(method, (VarInsnNode) insn, type);
             }
+            case BIPUSH:
+            case SIPUSH:
+            case ICONST_M1:
+            case ICONST_0:
+            case ICONST_1:
+            case ICONST_2:
+            case ICONST_3:
+            case ICONST_4:
+            case ICONST_5: {
+                return new PushExpr(method, insn, type);
+            }
             default: {
                 return new BasicExpr<>(method, insn, type);
             }
