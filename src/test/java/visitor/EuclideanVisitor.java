@@ -6,12 +6,12 @@ import io.disassemble.asm.visitor.expr.node.ConstExpr;
 import io.disassemble.asm.visitor.expr.node.FieldExpr;
 import io.disassemble.asm.visitor.expr.node.MathExpr;
 import org.objectweb.asm.tree.LabelNode;
+import org.objectweb.asm.tree.LineNumberNode;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.objectweb.asm.Opcodes.*;
 
@@ -29,13 +29,14 @@ public class EuclideanVisitor extends ExprTreeVisitor {
      */
     private static final BigInteger X64_ENCODER = BigInteger.ONE.shiftLeft(64);
 
-    private final Map<String, List<Number>> decoders, encoders;
-    private final Map<Number, Double> weights;
+    private final ConcurrentMap<String, List<Number>> decoders, encoders, excessEncoders;
+    private final ConcurrentMap<Number, Double> weights;
 
     public EuclideanVisitor() {
-        this.decoders = new HashMap<>();
-        this.encoders = new HashMap<>();
-        this.weights = new HashMap<>();
+        this.decoders = new ConcurrentHashMap<>();
+        this.encoders = new ConcurrentHashMap<>();
+        this.excessEncoders = new ConcurrentHashMap<>();
+        this.weights = new ConcurrentHashMap<>();
     }
 
     public Map<String, List<Number>> decoders() {
@@ -89,6 +90,14 @@ public class EuclideanVisitor extends ExprTreeVisitor {
     }
 
     private void handle(FieldExpr field, ConstExpr expr, Map<String, List<Number>> map) {
+        Number mult = expr.number();
+        boolean isLong = (mult instanceof Long);
+        boolean isInt = (mult instanceof Integer);
+        // multiplicative inverses cannot be even, let's filter them out.
+        if ((isLong && ((long) mult % 2L) == 0L) || (isInt && ((int) mult % 2) == 0)) {
+            return;
+        }
+        String key = field.key();
         double weight = 1.0D;
         if (field.getter()) {
             BasicExpr l = null, l2 = null, r = null;
@@ -108,29 +117,38 @@ public class EuclideanVisitor extends ExprTreeVisitor {
                 weight = 0.1D;
             }
         } else if (field.right() != null) {
-            BasicExpr r = field.right();
+            BasicExpr l = field.left(), r = field.right();
+            // The following begin new frames and should not be considered for encoders.
             if (r.opcode() == GOTO) {
+                if (!excessEncoders.containsKey(key)) {
+                    excessEncoders.put(key, new ArrayList<>());
+                }
+                excessEncoders.get(key).add(expr.number());
+                return;
+            } else if (l != null && l.insn() instanceof LabelNode && r.insn() instanceof LabelNode &&
+                    r.right() != null && r.right().insn() instanceof LineNumberNode) {
                 return;
             }
         }
-        Number mult = expr.number();
-        boolean isLong = (mult instanceof Long);
-        boolean isInt = (mult instanceof Integer);
-        // multiplicative inverses cannot be even, let's filter them out.
-        if ((isLong && ((long) mult % 2L) != 0L) || (isInt && ((int) mult % 2) != 0)) {
-            String key = field.key();
-            if (!map.containsKey(key)) {
-                map.put(key, new ArrayList<>());
-            }
-            List<Number> mults = map.get(key);
-            if (!mults.contains(mult)) {
-                mults.add(mult);
-            }
-            if (!weights.containsKey(mult)) {
-                weights.put(mult, 0D);
-            }
-            weights.put(mult, weights.get(mult) + weight);
+        if (!map.containsKey(key)) {
+            map.put(key, new ArrayList<>());
         }
+        List<Number> mults = map.get(key);
+        if (!mults.contains(mult)) {
+            mults.add(mult);
+        }
+        if (!weights.containsKey(mult)) {
+            weights.put(mult, 0D);
+        }
+        weights.put(mult, weights.get(mult) + weight);
+    }
+
+    private Number inverseOf(Number encoder) {
+        BigInteger quotient = new BigInteger(encoder.toString());
+        BigInteger mod = quotient.modInverse(X64_ENCODER);
+        boolean isLong = (encoder instanceof Long);
+        // this does not need to be checked since we only match longs/ints.
+        return (isLong ? mod.longValue() : mod.intValue());
     }
 
     public Map<String, Number> match() {
@@ -146,12 +164,11 @@ public class EuclideanVisitor extends ExprTreeVisitor {
                         // let's assume the inverse is completely valid, since it's the only encoder.
                         Number encoder = encs.get(0);
                         // since it's an encoder, let's get the multiplicative inverse of it (decoder).
-                        BigInteger quotient = new BigInteger(encoder.toString());
-                        BigInteger mod = quotient.modInverse(X64_ENCODER);
-                        boolean isLong = (encoder instanceof Long);
-                        // this does not need to be checked since we only match longs/ints.
-                        Number decoder = (isLong ? mod.longValue() : mod.intValue());
-                        matches.put(encKey, decoder);
+                        Number decoder = inverseOf(encoder);
+                        // let's only put it in if it hasn't been matched
+                        if (!matches.containsKey(encKey)) {
+                            matches.put(encKey, decoder);
+                        }
                     }
                     for (Number dec : decs) {
                         encs.stream().filter(enc -> {
@@ -181,6 +198,29 @@ public class EuclideanVisitor extends ExprTreeVisitor {
                     // let's use the decoder that has the highest weight.
                     decs.sort((a, b) -> Double.compare(weights.get(b), weights.get(a)));
                     matches.put(key, decs.get(0));
+                }
+            }
+        });
+        // loop through and find unmatched encoders without decoders
+        encoders.keySet().forEach(key -> {
+            if (!decoders.containsKey(key) && !matches.containsKey(key)) {
+                List<Number> encs = encoders.get(key);
+                if (encs.size() > 1) {
+                    // let's use the encoder that has the highest weight.
+                    encs.sort((a, b) -> Double.compare(weights.get(b), weights.get(a)));
+                    matches.put(key, inverseOf(encs.get(0)));
+                }
+            }
+        });
+        // loop through excess encoders and find near matches.
+        excessEncoders.keySet().forEach(key -> {
+            if (!decoders.containsKey(key) && !encoders.containsKey(key) && !matches.containsKey(key)) {
+                List<Number> encs = excessEncoders.get(key);
+                Set<Number> strippedEncs = new HashSet<>(encs);
+                if (strippedEncs.size() == 1) {
+                    matches.put(key, inverseOf(strippedEncs.iterator().next()));
+                } else {
+                    System.out.println("Too many excess encoders @ " + key);
                 }
             }
         });

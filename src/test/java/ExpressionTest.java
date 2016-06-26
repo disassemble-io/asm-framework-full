@@ -4,6 +4,7 @@ import io.disassemble.asm.JarArchive;
 import io.disassemble.asm.visitor.expr.ExprTree;
 import io.disassemble.asm.visitor.expr.ExprTreeBuilder;
 import io.disassemble.asm.visitor.expr.MultiExprTreeVisitor;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import visitor.EuclideanVisitor;
@@ -21,11 +22,11 @@ import java.util.concurrent.ConcurrentMap;
 public class ExpressionTest {
 
     private static final String TEST_CLASS_NAME = "";//"Sample";
-    private static final String TEST_JAR = "./src/test/excluded-java/res/jars/116.jar";
+    private static final String TEST_JAR = "./src/test/excluded-java/res/jars/117.jar";
 
     private ConcurrentMap<String, ClassFactory> classes;
 
-    @BeforeClass
+    @Before
     public void setup() {
 //        System.setProperty(ExprTree.VERBOSE_EXPRESSION_TREE, Boolean.toString(true));
         if (!TEST_CLASS_NAME.isEmpty()) {
@@ -52,36 +53,17 @@ public class ExpressionTest {
 
     @Test
     public void testExpression() {
-        Map<String, Deque<ExprTree>> trees = new HashMap<>();
-
-        long start = System.nanoTime();
-        trees.putAll(ExprTreeBuilder.buildAll(classes));
-        long end = System.nanoTime();
-
-        System.out.printf("trees built in %.4f seconds\n", (end - start) / 1e9);
-
         EuclideanVisitor euclid = new EuclideanVisitor();
-        ParameterVisitor param = new ParameterVisitor();
-        MultiExprTreeVisitor visitor = new MultiExprTreeVisitor(Arrays.asList(euclid, param));
-
-        start = System.nanoTime();
-        trees.values().forEach(exprTrees -> exprTrees.forEach(tree -> tree.accept(visitor)));
-        end = System.nanoTime();
-
-        System.out.printf("dispatched visitors in %.4f seconds", (end - start) / 1e9);
-
-        System.out.printf("visited %sD/%sE mults\n", euclid.decoders().size(), euclid.encoders().size());
-
-        start = System.nanoTime();
-        Map<String, Number> matched = euclid.match();
-        end = System.nanoTime();
-
-        System.out.printf("matched %s multipliers in %.4f seconds\n", matched.size(), (end - start) / 1e9);
-
-        System.out.printf("removed %s unused parameters\n", param.removed());
-
-//        new TreeSet<>(matched.keySet())
-//                .forEach(key -> System.out.println(key + " * " + matched.get(key)));
+        Map<String, Number> multipliers = new HashMap<>();
+        long start = System.nanoTime();
+        classes.values().parallelStream()
+                .forEach(factory -> Arrays.asList(factory.methods).parallelStream()
+                        .forEach(cm -> cm.tree(false).ifPresent(tree -> tree.accept(euclid))));
+        multipliers.putAll(euclid.match());
+        long end = System.nanoTime();
+        System.out.printf("matched %s multipliers in %.4f seconds\n", multipliers.size(), (end - start) / 1e9);
+        System.out.println("!@#!@#!@# " + multipliers.get("p.gq"));
+        System.out.println("!@#!@#!@# " + multipliers.get("em.s"));
 
     }
 }

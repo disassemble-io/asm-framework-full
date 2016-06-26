@@ -440,7 +440,7 @@ public class ClassMethod {
     }
 
     /**
-     * Clears the cache of key -> ClassMethod
+     * Clears the cache of key to ClassMethod
      */
     public static void clearKeyCache() {
         CACHED.clear();
