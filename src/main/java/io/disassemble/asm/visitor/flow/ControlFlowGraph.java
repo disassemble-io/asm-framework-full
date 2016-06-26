@@ -22,6 +22,29 @@ public class ControlFlowGraph {
         this.method = method;
     }
 
+    protected void flatten() {
+        List<BasicBlock> merged = new ArrayList<>();
+        blocks.sort((b1, b2) -> b1.start - b2.start);
+        blocks.stream()
+                .filter(block -> !merged.contains(block) && block.successors.size() == 1)
+                .forEach(block -> {
+                    merged.add(block);
+                    BasicBlock successor = block.successors.get(0);
+                    while (!merged.contains(successor)) {
+                        block.append(successor);
+                        block.successors.remove(successor);
+                        merged.add(successor);
+                        if (successor.successors.size() == 1) {
+                            successor = successor.successors.get(0);
+                        } else {
+                            break;
+                        }
+                    }
+                    merged.remove(block);
+                });
+        blocks.removeAll(merged);
+    }
+
     /**
      * Obtains a list of this graph's BasicBlocks.
      *
@@ -64,6 +87,7 @@ public class ControlFlowGraph {
         FlowVisitor visitor = new FlowVisitor();
         visitor.setGraph(graph);
         method.accept(visitor);
+        graph.flatten();
         return graph;
     }
 }

@@ -32,6 +32,20 @@ public class BasicBlock {
     }
 
     /**
+     * Adds the instructions from the given block to this block.
+     *
+     * @param block The block to append.
+     */
+    public void append(BasicBlock block) {
+        BasicInstruction[] instructions = instructions();
+        BasicInstruction[] blockInstructions = block.instructions();
+        BasicInstruction[] newInstructions = new BasicInstruction[instructions.length + blockInstructions.length];
+        System.arraycopy(instructions, 0, newInstructions, 0, instructions.length);
+        System.arraycopy(blockInstructions, 0, newInstructions, instructions.length, blockInstructions.length);
+        this.instructions = newInstructions;
+    }
+
+    /**
      * Gets the list of successors for this BasicBlock.
      *
      * @return The list of sucessors for this BasicBlock.
