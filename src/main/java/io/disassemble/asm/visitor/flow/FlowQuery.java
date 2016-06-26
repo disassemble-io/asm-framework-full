@@ -114,7 +114,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      */
     public FlowQuery opcode(int... opcodes) {
         Arrays.sort(opcodes);
-        predicates.add(insn -> (Arrays.binarySearch(opcodes, insn.insn.getOpcode()) >= 0));
+        predicates.add(insn -> (insn != null && insn.insn != null &&
+                Arrays.binarySearch(opcodes, insn.insn.getOpcode()) >= 0));
         return this;
     }
 
@@ -142,6 +143,9 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      */
     public FlowQuery stmtStore(Predicate<Integer> var) {
         predicates.add(insn -> {
+            if (insn == null || insn.insn == null) {
+                return false;
+            }
             int op = insn.insn.getOpcode();
             if (op  >= ISTORE && op <= SASTORE) {
                 boolean hasVar = (op >= ISTORE && op <= ASTORE);
@@ -177,6 +181,9 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      */
     public FlowQuery stmtLoad(Predicate<Integer> var) {
         predicates.add(insn -> {
+            if (insn == null || insn.insn == null) {
+                return false;
+            }
             int op = insn.insn.getOpcode();
             if (op  >= ILOAD && op <= SALOAD) {
                 boolean hasVar = (op >= ILOAD && op <= ALOAD);
