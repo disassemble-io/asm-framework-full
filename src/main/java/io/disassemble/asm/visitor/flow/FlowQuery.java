@@ -232,7 +232,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
 
     private Predicate<BasicInstruction> fieldPredicate(int opcode, Supplier<String> owner, Supplier<String> desc) {
         return insn -> {
-            if (insn.insn.getOpcode() == opcode) {
+            if (insn != null && insn.insn != null && insn.insn.getOpcode() == opcode) {
                 FieldInsnNode fin = (FieldInsnNode) insn.insn;
                 return ((owner == null || owner.get() == null || StringMatcher.matches(owner.get(), fin.owner)) &&
                         (desc == null || desc.get() == null || StringMatcher.matches(desc.get(), fin.desc)));
@@ -291,7 +291,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
 
     private Predicate<BasicInstruction> methodPredicate(int opcode, Supplier<String> owner, Supplier<String> desc) {
         return insn -> {
-            if (insn.insn.getOpcode() == opcode) {
+            if (insn != null && insn.insn != null && insn.insn.getOpcode() == opcode) {
                 MethodInsnNode min = (MethodInsnNode) insn.insn;
                 return ((owner == null || owner.get() == null || StringMatcher.matches(owner.get(), min.owner)) &&
                         (desc == null || desc.get() == null || StringMatcher.matches(desc.get(), min.desc)));
