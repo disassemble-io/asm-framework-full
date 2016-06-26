@@ -140,9 +140,14 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for a store statement.
      */
     public FlowQuery stmtStore(Predicate<Integer> var) {
-        predicates.add(insn -> (insn.insn.getOpcode() >= ISTORE &&
-                insn.insn.getOpcode() <= SASTORE) &&
-                (var == null || var.test(((VarInsnNode) insn.insn).var)));
+        predicates.add(insn -> {
+            int op = insn.insn.getOpcode();
+            if (op  >= ISTORE && op <= SASTORE) {
+                boolean hasVar = (op >= ISTORE && op <= ASTORE);
+                return var == null || (hasVar && var.test(((VarInsnNode) insn.insn).var));
+            }
+            return false;
+        });
         return this;
     }
 
@@ -170,9 +175,14 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for a load statement.
      */
     public FlowQuery stmtLoad(Predicate<Integer> var) {
-        predicates.add(insn -> (insn.insn.getOpcode() >= ILOAD &&
-                insn.insn.getOpcode() <= SALOAD) &&
-                (var == null || var.test(((VarInsnNode) insn.insn).var)));
+        predicates.add(insn -> {
+            int op = insn.insn.getOpcode();
+            if (op  >= ILOAD && op <= SALOAD) {
+                boolean hasVar = (op >= ILOAD && op <= ALOAD);
+                return var == null || (hasVar && var.test(((VarInsnNode) insn.insn).var));
+            }
+            return false;
+        });
         return this;
     }
 
