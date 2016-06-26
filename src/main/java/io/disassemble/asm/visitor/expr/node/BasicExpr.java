@@ -43,8 +43,8 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      * Constructs a BasicExpr for the given instruction and type.
      *
      * @param method The method this expression is in.
-     * @param insn The instruction to use.
-     * @param type The type of expression.
+     * @param insn   The instruction to use.
+     * @param type   The type of expression.
      */
     public BasicExpr(ClassMethod method, T insn, int type) {
         this.method = method;
@@ -97,17 +97,21 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
                 return 4;
             }
             case OP_NARY: {
-                boolean loadVar = (opcode() == INVOKEVIRTUAL || opcode() == INVOKESPECIAL ||
-                        opcode() == INVOKEINTERFACE);
-                if (loadVar || opcode() == INVOKESTATIC || opcode() == INVOKEDYNAMIC) {
-                    String desc = ((MethodInsnNode) insn).desc;
-                    int sizes = Type.getArgumentsAndReturnSizes(desc);
-                    // argSize = (sizes >> 2)
-                    // retSize = (sizes & 0x03)
-                    // subtract 1 if loadVar since INVOKESTATIC/INVOKEDYNAMIC do not need to call ALOAD_0
-                    return (sizes >> 2) - (loadVar ? 0 : 1);
-                } else if (opcode() == MULTIANEWARRAY) {
-                    return ((MultiANewArrayInsnNode) insn).dims;
+                if (opcode() == DUP) {
+                    return (parent() != null && parent().opcode() == INVOKESPECIAL ? 1 : 0);
+                } else {
+                    boolean loadVar = (opcode() == INVOKEVIRTUAL || opcode() == INVOKESPECIAL ||
+                            opcode() == INVOKEINTERFACE);
+                    if (loadVar || opcode() == INVOKESTATIC || opcode() == INVOKEDYNAMIC) {
+                        String desc = ((MethodInsnNode) insn).desc;
+                        int sizes = Type.getArgumentsAndReturnSizes(desc);
+                        // argSize = (sizes >> 2)
+                        // retSize = (sizes & 0x03)
+                        // subtract 1 if loadVar since INVOKESTATIC/INVOKEDYNAMIC do not need to call ALOAD_0
+                        return (sizes >> 2) - (loadVar ? 0 : 1);
+                    } else if (opcode() == MULTIANEWARRAY) {
+                        return ((MultiANewArrayInsnNode) insn).dims;
+                    }
                 }
             }
             default: {
@@ -216,8 +220,8 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      * Constructs the respective BasicExpr for the given instruction and type.
      *
      * @param method The method the given instruction belongs to.
-     * @param insn The instruction to resolve.
-     * @param type The type of expression.
+     * @param insn   The instruction to resolve.
+     * @param type   The type of expression.
      * @return The respective BasicExpr for the given instruction and type.
      */
     public static BasicExpr resolve(ClassMethod method, AbstractInsnNode insn, int type) {
@@ -324,14 +328,6 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
     public static int resolveType(AbstractInsnNode insn) {
         int op = insn.getOpcode();
         switch (op) {
-            case IALOAD:
-            case LALOAD:
-            case FALOAD:
-            case DALOAD:
-            case AALOAD:
-            case BALOAD:
-            case CALOAD:
-            case SALOAD:
             case IADD:
             case LADD:
             case FADD:
@@ -369,6 +365,22 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case FCMPG:
             case DCMPL:
             case DCMPG:
+            case IASTORE:
+            case BASTORE:
+            case LASTORE:
+            case FASTORE:
+            case DASTORE:
+            case AASTORE:
+            case CASTORE:
+            case SASTORE:
+            case IALOAD:
+            case LALOAD:
+            case FALOAD:
+            case DALOAD:
+            case AALOAD:
+            case BALOAD:
+            case CALOAD:
+            case SALOAD:
             case IF_ICMPEQ:
             case IF_ICMPNE:
             case IF_ICMPLT:
@@ -377,11 +389,10 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case IF_ICMPLE:
             case IF_ACMPEQ:
             case IF_ACMPNE:
-            case PUTFIELD:
-            case DUP_X1:
-            case DUP2: {
+            case PUTFIELD: {
                 return BasicExpr.OP_BINARY;
             }
+            case DUP:
             case INVOKEVIRTUAL:
             case INVOKESPECIAL:
             case INVOKESTATIC:
@@ -420,25 +431,18 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case NEWARRAY:
             case ANEWARRAY:
             case CHECKCAST:
-            case INSTANCEOF:
-            case DUP: {
+            case INSTANCEOF: {
                 return BasicExpr.OP_NULLARY;
             }
             case DUP2_X2: {
                 return BasicExpr.OP_QUATERNARY;
             }
-            case IASTORE:
-            case LASTORE:
-            case FASTORE:
-            case DASTORE:
-            case AASTORE:
-            case BASTORE:
-            case CASTORE:
-            case SASTORE:
             case DUP2_X1:
             case DUP_X2: {
                 return BasicExpr.OP_TERNARY;
             }
+            case DUP2:
+            case DUP_X1:
             case I2L:
             case I2F:
             case I2D:

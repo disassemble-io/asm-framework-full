@@ -2,10 +2,13 @@ package io.disassemble.asm.visitor.expr;
 
 import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassMethod;
+import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
 import io.disassemble.asm.visitor.expr.node.MethodExpr;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.LdcInsnNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -97,17 +100,34 @@ public class ExprTreeBuilder {
         // longs and doubles take up two slots on the stack for consts + fields
         // ^ these should *only* compute if its parent is a MethodExpr
         if (parent instanceof MethodExpr) {
-            if (op == LCONST_0 || op == LCONST_1 || op == DCONST_0 || op == DCONST_1 || op == I2L ||
-                    op == F2L || op == D2L || op == L2D || op == F2D || op == I2D) {
+            if (op == LCONST_0 || op == LCONST_1 || op == DCONST_0 || op == DCONST_1 ||
+                    op == I2L || op == F2L || op == D2L || op == L2D || op == F2D || op == I2D ||
+                    op == LADD || op == LSUB || op == LMUL || op == LDIV ||
+                    op == DADD || op == DSUB || op == DMUL || op == DDIV ||
+                    op == LOR || op == LAND || op == LREM || op == LNEG ||
+                    op == LSHL || op == LSHR || op == LLOAD || op == DLOAD ||
+                    op == LSTORE || op == DSTORE) {
                 return 1;
             } else if (op == GETFIELD || op == GETSTATIC) {
                 FieldInsnNode fin = (FieldInsnNode) insn;
                 if (fin.desc.equals("J") || fin.desc.equals("D")) {
                     return 1;
                 }
+            } else if (op == INVOKESTATIC || op == INVOKEVIRTUAL || op == INVOKEDYNAMIC) {
+                MethodInsnNode min = (MethodInsnNode) insn;
+                if (min.desc.endsWith(")J") || min.desc.endsWith(")D")) {
+                    return 1;
+                }
+            } else if (op == LDC) {
+                LdcInsnNode ldc = (LdcInsnNode) insn;
+                if (ldc.cst != null && (ldc.cst instanceof Long || ldc.cst instanceof Double)) {
+                    return 1;
+                }
             }
         }
-        if (op == DUP_X1 || op == DUP2) {
+        if (op == DUP2) {
+            return 1;
+        } else if (op == DUP_X1) {
             return 2;
         } else if (op == DUP_X2 || op == DUP2_X1) {
             return 3;

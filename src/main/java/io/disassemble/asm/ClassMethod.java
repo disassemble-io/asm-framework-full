@@ -26,6 +26,8 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
@@ -48,7 +50,7 @@ public class ClassMethod {
             new LocalReader(), new LocalWriter(), new ArrayCreator(), new ArrayReader(), new ArrayWriter() // Data Flow
     };
 
-    private static final Map<String, ClassMethod> cached = new HashMap<>();
+    private static final ConcurrentMap<String, ClassMethod> CACHED = new ConcurrentHashMap<>();
 
     public final ClassFactory owner;
     public final MethodNode method;
@@ -63,7 +65,7 @@ public class ClassMethod {
     public ClassMethod(ClassFactory owner, MethodNode method) {
         this.owner = owner;
         this.method = method;
-        cached.put(key(), this);
+        CACHED.put(key(), this);
     }
 
     /**
@@ -73,7 +75,7 @@ public class ClassMethod {
      * @return The ClassMethod matching the given key, if it is within the cache.
      */
     public static ClassMethod resolve(String key) {
-        return cached.get(key);
+        return CACHED.get(key);
     }
 
     /**
@@ -435,6 +437,13 @@ public class ClassMethod {
      */
     public Optional<ControlFlowGraph> cfg() {
         return cfg(true);
+    }
+
+    /**
+     * Clears the cache of key -> ClassMethod
+     */
+    public static void clearKeyCache() {
+        CACHED.clear();
     }
 
     @Override
