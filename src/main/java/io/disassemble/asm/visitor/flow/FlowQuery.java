@@ -125,9 +125,9 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an if statement.
      */
     public FlowQuery stmtIf() {
-        predicates.add(insn -> (insn.insn.getOpcode() >= IFEQ &&
+        predicates.add(insn -> insn != null && insn.insn != null && ((insn.insn.getOpcode() >= IFEQ &&
                 insn.insn.getOpcode() <= IF_ACMPNE) ||
-                (insn.insn.getOpcode() >= IFNULL && insn.insn.getOpcode() <= IFNONNULL));
+                (insn.insn.getOpcode() >= IFNULL && insn.insn.getOpcode() <= IFNONNULL)));
         return this;
     }
 
@@ -223,7 +223,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for a TypeInsnNode matching the given type.
      */
     public FlowQuery stmtType(Supplier<String> type) {
-        predicates.add(insn -> (insn.insn instanceof TypeInsnNode &&
+        predicates.add(insn -> (insn != null && insn.insn != null && insn.insn instanceof TypeInsnNode &&
                 (type == null || StringMatcher.matches(type.get(), ((TypeInsnNode) insn.insn).desc))));
         return this;
     }
@@ -362,7 +362,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an IntInsnNode matching the given predicate.
      */
     public FlowQuery stmtPush(Predicate<Integer> operand) {
-        predicates.add(insn -> (insn.insn.getOpcode() == BIPUSH ||
+        predicates.add(insn -> insn != null && insn.insn != null && (insn.insn.getOpcode() == BIPUSH ||
                 insn.insn.getOpcode() == SIPUSH) &&
                 (operand == null || operand.test(((IntInsnNode) insn.insn).operand)));
         return this;
@@ -384,9 +384,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an LdcInsnNode matching the given predicate.
      */
     public FlowQuery stmtStringConstant(Supplier<String> constant) {
-        predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-                (constant == null || constant.get() == null ||
-                        constant.get().equals(((LdcInsnNode) insn.insn).cst))));
+        predicates.add(insn -> (insn != null && insn.insn != null && insn.insn instanceof LdcInsnNode &&
+                (constant == null || constant.get() == null || constant.get().equals(((LdcInsnNode) insn.insn).cst))));
         return this;
     }
 
@@ -397,9 +396,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an LdcInsnNode matching the given predicate.
      */
     public FlowQuery stmtIntConstant(Supplier<Integer> constant) {
-        predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-                (constant == null || constant.get() == null ||
-                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
+        predicates.add(insn -> (insn != null && insn.insn != null && insn.insn instanceof LdcInsnNode &&
+                (constant == null || constant.get() == null || constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -410,9 +408,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an LdcInsnNode matching the given predicate.
      */
     public FlowQuery stmtLongConstant(Supplier<Long> constant) {
-        predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-                (constant == null || constant.get() == null ||
-                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
+        predicates.add(insn -> (insn != null && insn.insn != null && insn.insn instanceof LdcInsnNode &&
+                (constant == null || constant.get() == null || constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -423,9 +420,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an LdcInsnNode matching the given predicate.
      */
     public FlowQuery stmtDoubleConstant(Supplier<Double> constant) {
-        predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-                (constant == null || constant.get() == null ||
-                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
+        predicates.add(insn -> (insn != null && insn.insn != null && insn.insn instanceof LdcInsnNode &&
+                (constant == null || constant.get() == null || constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
@@ -436,9 +432,8 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return This FlowQuery chained with a predicate checking for an LdcInsnNode matching the given predicate.
      */
     public FlowQuery stmtShortConstant(Supplier<Short> constant) {
-        predicates.add(insn -> (insn.insn instanceof LdcInsnNode &&
-                (constant == null || constant.get() == null ||
-                        constant.get() == ((LdcInsnNode) insn.insn).cst)));
+        predicates.add(insn -> (insn != null && insn.insn != null && insn.insn instanceof LdcInsnNode &&
+                (constant == null || constant.get() == null || constant.get() == ((LdcInsnNode) insn.insn).cst)));
         return this;
     }
 
