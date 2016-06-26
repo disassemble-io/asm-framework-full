@@ -17,6 +17,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @since 2/12/2016
  */
 public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
+
     public static final int DEFAULT_MAX_DISTANCE = 10;
     private final List<Predicate<BasicInstruction>> predicates = new ArrayList<>();
     private final List<Integer> branches = new ArrayList<>();
@@ -683,6 +684,19 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      */
     public FlowQuery dist(int maxDist) {
         dists.put(predicates.size() - 1, maxDist);
+        return this;
+    }
+
+    /**
+     * Sets the search distance for the all predicates.
+     *
+     * @param maxDist The maximum distance to search.
+     * @return This FlowQuery with a distance constraint on all predicates.
+     */
+    public FlowQuery distAll(int maxDist) {
+        for (int i = 0; i < predicates.size(); i++) {
+            dists.put(i, maxDist);
+        }
         return this;
     }
 
