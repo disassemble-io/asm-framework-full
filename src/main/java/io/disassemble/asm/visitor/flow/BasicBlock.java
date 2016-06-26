@@ -59,7 +59,8 @@ public class BasicBlock {
      * @return The starting instruction of this block.
      */
     public BasicInstruction entry() {
-        return instructions()[0];
+        BasicInstruction[] insns = instructions();
+        return (insns.length > 0 ? insns[0] : null);
     }
 
     /**
@@ -69,7 +70,7 @@ public class BasicBlock {
      */
     public BasicInstruction exit() {
         BasicInstruction[] insns = instructions();
-        return insns[insns.length - 1];
+        return (insns.length > 0 ? insns[insns.length - 1] : null);
     }
 
     /**
