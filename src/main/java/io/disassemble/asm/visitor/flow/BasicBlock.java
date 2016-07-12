@@ -13,8 +13,8 @@ import java.util.*;
  */
 public class BasicBlock {
 
-    protected final List<BasicBlock> successors = new ArrayList<>();
-    protected BasicBlock predecessor;
+    List<BasicBlock> successors = new ArrayList<>();
+    BasicBlock predecessor;
 
     public final String id;
     public final ClassMethod method;

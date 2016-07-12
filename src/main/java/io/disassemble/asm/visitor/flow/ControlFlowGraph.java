@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class ControlFlowGraph {
 
-    protected final List<BasicBlock> blocks = new ArrayList<>();
+    final List<BasicBlock> blocks = new ArrayList<>();
 
     public final ClassMethod method;
 

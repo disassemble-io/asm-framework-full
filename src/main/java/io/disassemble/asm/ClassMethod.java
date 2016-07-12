@@ -50,7 +50,7 @@ public class ClassMethod {
             new LocalReader(), new LocalWriter(), new ArrayCreator(), new ArrayReader(), new ArrayWriter() // Data Flow
     };
 
-    private static final ConcurrentMap<String, ClassMethod> CACHED = new ConcurrentHashMap<>();
+    private static ConcurrentMap<String, ClassMethod> CACHED = new ConcurrentHashMap<>();
 
     public final ClassFactory owner;
     public final MethodNode method;
@@ -444,6 +444,7 @@ public class ClassMethod {
      */
     public static void clearKeyCache() {
         CACHED.clear();
+        CACHED = new ConcurrentHashMap<>();
     }
 
     @Override
