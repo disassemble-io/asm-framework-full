@@ -197,6 +197,39 @@ public class Assembly {
     }
 
     /**
+     * Renames the given method throughout the ClassFactory map with to given name.
+     *
+     * @param classes The map of classes to rename within.
+     * @param cm      The method to rename.
+     * @param newName The name to rename the method to.
+     */
+    public static void rename(Map<String, ClassFactory> classes, ClassMethod cm, String newName) {
+        for (ClassFactory factory : classes.values()) {
+            for (ClassMethod method : factory.methods) {
+                for (AbstractInsnNode ain : method.instructions().toArray()) {
+                    if (ain instanceof MethodInsnNode) {
+                        MethodInsnNode min = (MethodInsnNode) ain;
+                        ClassFactory realOwner = classes.get(min.owner);
+                        while (realOwner != null) {
+                            if (realOwner.findMethod(
+                                    m -> m.name().equals(min.name) && m.desc().equals(min.desc)
+                            ) != null) {
+                                break;
+                            }
+                            realOwner = classes.get(realOwner.superName());
+                        }
+                        if (realOwner != null && realOwner.name().equals(cm.owner.name()) &&
+                                min.name.equals(cm.method.name)) {
+                            min.name = newName;
+                        }
+                    }
+                }
+            }
+        }
+        cm.method.name = newName;
+    }
+
+    /**
      * Renames the given class throughout the ClassFactory map with to given name.
      *
      * @param classes The map of classes to rename within.
