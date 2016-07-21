@@ -22,7 +22,7 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  * @since 2/1/16
  */
 public class Assembly {
-    private static final String[] KEYWORDS = {"abstract", "assert", "boolean",
+    private static final String[] JAVA_IDENTIFIERS = {"abstract", "assert", "boolean",
             "break", "byte", "case", "catch", "char", "class", "const",
             "continue", "default", "do", "double", "else", "extends", "false",
             "final", "finally", "float", "for", "goto", "if", "implements",
@@ -31,6 +31,11 @@ public class Assembly {
             "return", "short", "static", "strictfp", "super", "switch",
             "synchronized", "this", "throw", "throws", "transient", "true",
             "try", "void", "volatile", "while"};
+
+    static {
+        Arrays.sort(JAVA_IDENTIFIERS);
+    }
+
     private Assembly() {
     }
 
@@ -537,12 +542,7 @@ public class Assembly {
         return builder.toString();
     }
 
-    public static boolean isKeyword(String string){
-        for (String keyword : KEYWORDS) {
-            if (keyword.equals(string)) {
-                return true;
-            }
-        }
-        return false;
+    public static boolean isJavaIdentifier(String string) {
+        return Arrays.binarySearch(JAVA_IDENTIFIERS, string) >= 0;
     }
 }
