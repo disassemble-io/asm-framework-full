@@ -18,9 +18,19 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
 
 /**
  * @author Tyler Sedlar
+ * @author Christopher Carpenter
  * @since 2/1/16
  */
 public class Assembly {
+    private static final String[] KEYWORDS = {"abstract", "assert", "boolean",
+            "break", "byte", "case", "catch", "char", "class", "const",
+            "continue", "default", "do", "double", "else", "extends", "false",
+            "final", "finally", "float", "for", "goto", "if", "implements",
+            "import", "instanceof", "int", "interface", "long", "native",
+            "new", "null", "package", "private", "protected", "public",
+            "return", "short", "static", "strictfp", "super", "switch",
+            "synchronized", "this", "throw", "throws", "transient", "true",
+            "try", "void", "volatile", "while"};
     private Assembly() {
     }
 
@@ -525,5 +535,14 @@ public class Assembly {
             }
         }
         return builder.toString();
+    }
+
+    public static boolean isKeyword(String string){
+        for (String keyword : KEYWORDS) {
+            if (keyword.equals(string)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
