@@ -8,10 +8,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.objectweb.asm.util.Printer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static org.objectweb.asm.tree.AbstractInsnNode.*;
@@ -21,7 +18,7 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
  * @author Christopher Carpenter
  * @since 2/1/16
  */
-public class Assembly {
+public final class Assembly {
     private static final String[] JAVA_IDENTIFIERS = {"abstract", "assert", "boolean",
             "break", "byte", "case", "catch", "char", "class", "const",
             "continue", "default", "do", "double", "else", "extends", "false",
@@ -60,14 +57,18 @@ public class Assembly {
      */
     @SuppressWarnings("unchecked")
     public static <E extends AbstractInsnNode> List<E> findAll(InsnList list, Predicate<AbstractInsnNode> predicate) {
-        List<E> results = new ArrayList<>();
-        AbstractInsnNode[] instructions = list.toArray();
-        for (AbstractInsnNode insn : instructions) {
-            if (predicate.test(insn)) {
-                results.add((E) insn);
-            }
+        ListIterator<AbstractInsnNode> instructions = list.iterator();
+        if (instructions.hasNext()) {
+            List<E> results = new ArrayList<>(Math.min(10, list.size()));
+            do {
+                AbstractInsnNode insn = instructions.next();
+                if (predicate.test(insn)) {
+                    results.add((E) insn);
+                }
+            } while (instructions.hasNext());
+            return results;
         }
-        return results;
+        return new ArrayList<>();
     }
 
     /**
@@ -260,12 +261,15 @@ public class Assembly {
                 factory.interfaces().remove(cf.name());
                 factory.interfaces().add(newName);
             }
+            //TODO if the class factory being renamed is an annotation, check the annotations on classes to see if they need to be adjusted.
             for (ClassField field : factory.fields) {
+                //Check the field annotations and their default values to determine if they should be renamed.
                 if (field.desc().endsWith("L" + cf.name() + ";")) {
                     field.setDescriptor(field.desc().replace("L" + cf.name() + ";", "L" + newName + ";"));
                 }
             }
             for (ClassMethod method : factory.methods) {
+                //Check if we need to rename any of the thrown exceptions or the annotation default.
                 if (method.desc().contains("L" + cf.name() + ";")) {
                     method.setDescriptor(method.desc().replaceAll("L" + cf.name() + ";", "L" + newName + ";"));
                 }

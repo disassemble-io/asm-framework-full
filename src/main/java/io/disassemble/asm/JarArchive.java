@@ -171,6 +171,8 @@ public class JarArchive extends Archive {
         }
         try (JarOutputStream output = new JarOutputStream(new FileOutputStream(destinationFile))) {
             Map<String, String> hashes = new HashMap<>();
+            //TODO add an overload that allows the developer to specify whether the original class reader should be provided so that the constant pool and unmodified methods can be copied instead of rebuilt saving a significant amount of time.
+            //TODO generate the byte[] for each class concurrently. This can save significant amounts of time but care must be taken to ensure that entries are not added to the jar concurrently.
             for (Map.Entry<String, ClassFactory> entry : classes.entrySet()) {
                 ClassFactory factory = entry.getValue();
                 String entryKey = factory.name().replaceAll("\\.", "/") + ".class";
