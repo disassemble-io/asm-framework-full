@@ -73,7 +73,7 @@ public class StackFrame {
     }
 
     public String info() {
-        return localInfo() + " " + stackInfo();
+        return localInfo() + ' ' + stackInfo();
     }
 
     @Override

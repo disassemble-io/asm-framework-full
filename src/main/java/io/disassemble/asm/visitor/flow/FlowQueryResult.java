@@ -45,7 +45,7 @@ public class FlowQueryResult {
      */
     public Optional<AbstractInsnNode> findInstruction(String name) {
         Optional<BasicInstruction> insn = findBasicInstruction(name);
-        return (insn.isPresent() ? Optional.ofNullable(insn.get().insn) : Optional.empty());
+        return (insn.flatMap(basicInstruction -> Optional.ofNullable(basicInstruction.insn)));
     }
 
     /**

@@ -21,7 +21,7 @@ public class BasicSetterPattern extends CompositePattern {
             for (AbstractInsnNode insn : instructions) {
                 if (insn instanceof MethodInsnNode) {
                     MethodInsnNode min = (MethodInsnNode) insn;
-                    String key = (min.owner + "." + min.name + min.desc);
+                    String key = (min.owner + '.' + min.name + min.desc);
                     ClassMethod resolved = ClassMethod.resolve(key);
                     if (resolved != null && resolved.findAdvancedNanoPatterns().contains(FIELD_WRITER)) {
                         return true;

@@ -45,7 +45,7 @@ public class ClassFactory {
      * @return The desc of this class.
      */
     public String desc() {
-        return "L" + name() + ";";
+        return 'L' + name() + ';';
     }
 
     /**
@@ -91,7 +91,7 @@ public class ClassFactory {
      */
     @SuppressWarnings("unchecked")
     public List<String> interfaces() {
-        return (List<String>) node.interfaces;
+        return node.interfaces;
     }
 
     /**

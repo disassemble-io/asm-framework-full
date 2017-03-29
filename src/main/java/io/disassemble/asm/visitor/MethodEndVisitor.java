@@ -529,7 +529,7 @@ public abstract class MethodEndVisitor extends ClassMethodVisitor {
         if (!exits.isEmpty()) {
             exits.sort((a, b) -> {
                 int goA = method.instructions().indexOf(((JumpInsnNode) a.getPrevious().getPrevious()).label);
-                int goB = method.instructions().indexOf(((JumpInsnNode) a.getPrevious().getPrevious()).label);
+                int goB = method.instructions().indexOf(((JumpInsnNode) b.getPrevious().getPrevious()).label);
                 return (goB - goA);
             });
             visitExit(exits.get(0));

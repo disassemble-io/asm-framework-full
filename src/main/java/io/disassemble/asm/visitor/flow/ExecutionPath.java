@@ -115,7 +115,7 @@ public class ExecutionPath {
                         insn.block.successors().forEach(consumer);
                     }
                 }
-                matching = branchInstructions.stream().filter(predicate::test).collect(Collectors.toList());
+                matching = branchInstructions.stream().filter(predicate).collect(Collectors.toList());
             } else {
                 if (i == 0) {
                     matching = findAll(predicate);

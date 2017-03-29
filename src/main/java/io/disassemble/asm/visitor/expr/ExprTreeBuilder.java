@@ -61,9 +61,7 @@ public class ExprTreeBuilder {
         Map<String, Deque<ExprTree>> trees = new HashMap<>();
         classes.values().parallelStream().forEach(factory -> {
             Deque<ExprTree> factoryTrees = new ArrayDeque<>();
-            Arrays.asList(factory.methods).parallelStream().forEach(method -> {
-                build(method).ifPresent(factoryTrees::add);
-            });
+            Arrays.asList(factory.methods).parallelStream().forEach(method -> build(method).ifPresent(factoryTrees::add));
             trees.put(factory.name(), factoryTrees);
         });
         return trees;

@@ -628,7 +628,7 @@ public class IndexedDeque<E> extends AbstractCollection<E> implements Deque<E>, 
             if (n < 0) {
                 n += deq.elements.length;
             }
-            return (long) n;
+            return n;
         }
 
         @Override

@@ -20,7 +20,7 @@ public class FieldExpr extends MemberExpr<FieldInsnNode> {
 
     @Override
     public String key() {
-        return (insn.owner + "." + insn.name);
+        return (insn.owner + '.' + insn.name);
     }
 
     @Override

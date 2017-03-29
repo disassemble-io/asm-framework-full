@@ -20,9 +20,9 @@ public class DefaultIdentifierLogger extends IdentifierLogger {
     @Override
     public void printParser(BytecodeParser parser) {
         String factoryName = (parser.factory() != null ? parser.factory().name() : null);
-        System.out.println("* " + parser.info().name() + " as '" + factoryName + "'");
+        System.out.println("* " + parser.info().name() + " as '" + factoryName + '\'');
         parser.foundValues.forEach((name, instructions) -> {
-            System.out.println("  * " + name + ":");
+            System.out.println("  * " + name + ':');
             instructions.forEach(insn -> System.out.println("    ^ " + Assembly.toString(insn)));
         });
     }

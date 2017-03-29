@@ -675,7 +675,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return The BranchType for the given index.
      */
     public BranchType branchTypeAt(int index) {
-        return (branchTypes.containsKey(index) ? branchTypes.get(index) : BranchType.DEFAULT);
+        return (branchTypes.getOrDefault(index, BranchType.DEFAULT));
     }
 
     /**
@@ -709,7 +709,7 @@ public class FlowQuery extends Query<FlowQueryResult, ControlFlowGraph> {
      * @return The max search distance for the predicate at the given index.
      */
     public int distAt(int index) {
-        return (dists.containsKey(index) ? dists.get(index) : DEFAULT_MAX_DISTANCE);
+        return (dists.getOrDefault(index, DEFAULT_MAX_DISTANCE));
     }
 
     /**

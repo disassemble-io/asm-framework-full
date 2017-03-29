@@ -15,7 +15,7 @@ public class AlphaLabel {
      * @return the alpha label for the given number
      */
     public static String get(int n) {
-        char[] buf = new char[(int) Math.floor(Math.log(25 * (n + 1)) / Math.log(26))];
+        char[] buf = new char[(int) Math.floor(StrictMath.log(25 * (n + 1)) / StrictMath.log(26))];
         for (int i = buf.length - 1; i >= 0; i--) {
             buf[i] = (char) ('A' + (--n) % 26);
             n /= 26;
@@ -32,7 +32,7 @@ public class AlphaLabel {
     public static int numeric(String label) {
         int result = 0;
         for (int i = label.length() - 1; i >= 0; i--) {
-            result = result + (label.charAt(i) - 64) * (int) Math.pow(26, label.length() - (i + 1));
+            result = result + (label.charAt(i) - 64) * (int) StrictMath.pow(26, label.length() - (i + 1));
         }
         return result;
     }

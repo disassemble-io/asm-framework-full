@@ -29,12 +29,12 @@ public class Grep {
     public Map<String, String> exec(String test) {
         Map<String, String> matches = new HashMap<>();
         int start = -1, prevEnd = 0, lookup = 0;
-        String tag = "";
+        StringBuilder tag = new StringBuilder();
         for (int i = 0; i < pattern.length(); i++) {
             char c = pattern.charAt(i);
             if (c == '{') {
                 start = i;
-            } else if (start != -1 && !tag.isEmpty() && c == '}') {
+            } else if (start != -1 && (tag.length() > 0) && c == '}') {
                 String backwards = pattern.substring(prevEnd, start);
                 int idx = test.indexOf(backwards, lookup);
                 if (idx == -1) {
@@ -46,13 +46,13 @@ public class Grep {
                 if (endIdx == -1) {
                     return null;
                 }
-                matches.put(tag, test.substring(idx + backwards.length(), endIdx));
+                matches.put(tag.toString(), test.substring(idx + backwards.length(), endIdx));
                 lookup = idx;
                 prevEnd = (i + 1);
-                tag = "";
+                tag = new StringBuilder();
                 start = -1;
             } else if (start != -1) {
-                tag += c;
+                tag.append(c);
             }
         }
         return matches;

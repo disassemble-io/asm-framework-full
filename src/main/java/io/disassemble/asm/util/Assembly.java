@@ -264,14 +264,14 @@ public final class Assembly {
             //TODO if the class factory being renamed is an annotation, check the annotations on classes to see if they need to be adjusted.
             for (ClassField field : factory.fields) {
                 //Check the field annotations and their default values to determine if they should be renamed.
-                if (field.desc().endsWith("L" + cf.name() + ";")) {
-                    field.setDescriptor(field.desc().replace("L" + cf.name() + ";", "L" + newName + ";"));
+                if (field.desc().endsWith('L' + cf.name() + ';')) {
+                    field.setDescriptor(field.desc().replace('L' + cf.name() + ';', 'L' + newName + ';'));
                 }
             }
             for (ClassMethod method : factory.methods) {
                 //Check if we need to rename any of the thrown exceptions or the annotation default.
-                if (method.desc().contains("L" + cf.name() + ";")) {
-                    method.setDescriptor(method.desc().replaceAll("L" + cf.name() + ";", "L" + newName + ";"));
+                if (method.desc().contains('L' + cf.name() + ';')) {
+                    method.setDescriptor(method.desc().replaceAll('L' + cf.name() + ';', 'L' + newName + ';'));
                 }
                 for (AbstractInsnNode ain : method.instructions().toArray()) {
                     if (ain instanceof FieldInsnNode) {
@@ -279,36 +279,36 @@ public final class Assembly {
                         if (fin.owner.equals(cf.name())) {
                             fin.owner = newName;
                         }
-                        if (fin.desc.contains("L" + cf.name() + ";")) {
-                            fin.desc = fin.desc.replace("L" + cf.name() + ";", "L" + newName + ";");
+                        if (fin.desc.contains('L' + cf.name() + ';')) {
+                            fin.desc = fin.desc.replace('L' + cf.name() + ';', 'L' + newName + ';');
                         }
                     } else if (ain instanceof MethodInsnNode) {
                         MethodInsnNode min = (MethodInsnNode) ain;
                         if (min.owner.equals(cf.name())) {
                             min.owner = newName;
                         }
-                        if (min.desc.contains("L" + cf.name() + ";")) {
-                            min.desc = min.desc.replaceAll("L" + cf.name() + ";", "L" + newName + ";");
+                        if (min.desc.contains('L' + cf.name() + ';')) {
+                            min.desc = min.desc.replaceAll('L' + cf.name() + ';', 'L' + newName + ';');
                         }
                     } else if (ain instanceof TypeInsnNode) {
                         TypeInsnNode tin = (TypeInsnNode) ain;
                         if (tin.desc.equals(cf.name())) {
                             tin.desc = newName;
-                        } else if (tin.desc.contains("L" + cf.name() + ";")) {
-                            tin.desc = tin.desc.replace("L" + cf.name() + ";", "L" + newName + ";");
+                        } else if (tin.desc.contains('L' + cf.name() + ';')) {
+                            tin.desc = tin.desc.replace('L' + cf.name() + ';', 'L' + newName + ';');
                         }
                     } else if (ain instanceof MultiANewArrayInsnNode) {
                         MultiANewArrayInsnNode manain = (MultiANewArrayInsnNode) ain;
-                        if (manain.desc.contains("L" + cf.name() + ";")) {
-                            manain.desc = manain.desc.replace("L" + cf.name() + ";", "L" + newName + ";");
+                        if (manain.desc.contains('L' + cf.name() + ';')) {
+                            manain.desc = manain.desc.replace('L' + cf.name() + ';', 'L' + newName + ';');
                         }
                     } else if (ain instanceof LdcInsnNode) {
                         LdcInsnNode ldc = (LdcInsnNode) ain;
                         Object cst = ldc.cst;
                         if (cst != null && cst instanceof String) {
                             String cstString = (String) cst;
-                            if (cstString.startsWith(cf.name() + ".") && cstString.contains("(")) {
-                                ldc.cst = cstString.replace(cf.name() + ".", newName + ".");
+                            if (cstString.startsWith(cf.name() + '.') && cstString.contains("(")) {
+                                ldc.cst = cstString.replace(cf.name() + '.', newName + '.');
                             }
                         }
                     }
@@ -389,7 +389,7 @@ public final class Assembly {
                     return false;
                 }
                 for (int i = 0; i < size; i++) {
-                    if (!instructionsEqual((LabelNode) tsin1.labels.get(i), (LabelNode) tsin2.labels.get(i))) {
+                    if (!instructionsEqual(tsin1.labels.get(i), tsin2.labels.get(i))) {
                         return false;
                     }
                 }
@@ -402,7 +402,7 @@ public final class Assembly {
                     return false;
                 }
                 for (int i = 0; i < size; i++) {
-                    if (!instructionsEqual((LabelNode) lsin1.labels.get(i), (LabelNode) lsin2.labels.get(i))) {
+                    if (!instructionsEqual(lsin1.labels.get(i), lsin2.labels.get(i))) {
                         return false;
                     }
                 }

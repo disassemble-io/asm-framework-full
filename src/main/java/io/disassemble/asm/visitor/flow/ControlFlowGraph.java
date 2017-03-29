@@ -4,6 +4,7 @@ import io.disassemble.asm.ClassMethod;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -24,7 +25,7 @@ public class ControlFlowGraph {
 
     protected void flatten() {
         List<BasicBlock> merged = new ArrayList<>();
-        blocks.sort((b1, b2) -> b1.start - b2.start);
+        blocks.sort(Comparator.comparingInt(b -> b.start));
         blocks.stream()
                 .filter(block -> !merged.contains(block) && block.successors.size() == 1)
                 .forEach(block -> {

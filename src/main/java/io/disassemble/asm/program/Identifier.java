@@ -83,7 +83,7 @@ public abstract class Identifier extends Thread {
         for (BytecodeParser parser : parsers()) {
             parser.expectedValues.forEach((hook) -> {
                 if (!parser.foundValues.containsKey(hook)) {
-                    missing.add(parser.info().name() + "#" + hook);
+                    missing.add(parser.info().name() + '#' + hook);
                 }
             });
         }

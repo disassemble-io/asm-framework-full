@@ -25,7 +25,7 @@ public class MethodExpr extends MemberExpr<MethodInsnNode> {
 
     @Override
     public String key() {
-        return (insn.owner + "." + insn.name + insn.desc);
+        return (insn.owner + '.' + insn.name + insn.desc);
     }
 
     @Override

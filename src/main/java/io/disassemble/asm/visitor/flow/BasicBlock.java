@@ -174,15 +174,15 @@ public class BasicBlock {
     }
 
     private void print(String prepend, String suffix) {
-        String result = (prepend + "<" + start + " - " + end + ">\n");
+        StringBuilder result = new StringBuilder((prepend + '<' + start + " - " + end + ">\n"));
         BasicInstruction[] insns = instructions();
         for (int i = 0; i < insns.length; i++) {
             if (i > 0) {
-                result += "\n";
+                result.append('\n');
             }
-            result += (prepend + Assembly.toString(insns[i].insn));
+            result.append(prepend).append(Assembly.toString(insns[i].insn));
         }
-        result += suffix;
+        result.append(suffix);
         System.out.println(result);
     }
 
@@ -217,7 +217,7 @@ public class BasicBlock {
                         printed.add(fBranch);
                     }
                 });
-                System.out.println(prefix + "}");
+                System.out.println(prefix + '}');
             }
         }
     }

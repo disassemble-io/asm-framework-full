@@ -171,7 +171,7 @@ public class ClassMethod {
      * @return This method's key label (class.name + "." + method.name + method.desc)
      */
     public String key() {
-        return owner.node.name + "." + method.name + method.desc;
+        return owner.node.name + '.' + method.name + method.desc;
     }
 
     /**
@@ -227,7 +227,7 @@ public class ClassMethod {
                 for (AbstractInsnNode ain : method.instructions().toArray()) {
                     if (ain instanceof MethodInsnNode) {
                         MethodInsnNode min = (MethodInsnNode) ain;
-                        if ((min.owner + "." + min.name + min.desc).equals(key())) {
+                        if ((min.owner + '.' + min.name + min.desc).equals(key())) {
                             callers.add(min);
                         }
                     }
@@ -243,7 +243,7 @@ public class ClassMethod {
      * @return true if this method returns a desc of the class it's in, otherwise false.
      */
     public boolean chained() {
-        return local() && desc().endsWith(")L" + owner.name() + ";");
+        return local() && desc().endsWith(")L" + owner.name() + ';');
     }
 
     /**

@@ -43,7 +43,7 @@ public class ClassField {
     }
 
     public String key() {
-        return owner.name() + "." + name();
+        return owner.name() + '.' + name();
     }
 
     public boolean local() {

@@ -203,7 +203,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
     }
 
     private void print(String indent) {
-        System.out.println(indent + Assembly.toString(insn) + " (" + LABELS[type] + ")");
+        System.out.println(indent + Assembly.toString(insn) + " (" + LABELS[type] + ')');
         for (BasicExpr expr : children) {
             expr.print(indent + "  ");
         }
