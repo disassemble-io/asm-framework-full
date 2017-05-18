@@ -12,7 +12,7 @@ public abstract class Query<R, I> {
     private boolean locked;
 
     public void lock() {
-        this.locked = false;
+        this.locked = true;
     }
 
     public boolean locked() {
