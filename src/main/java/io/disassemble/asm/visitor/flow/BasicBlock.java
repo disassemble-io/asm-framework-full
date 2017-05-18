@@ -252,14 +252,14 @@ public class BasicBlock {
 
     @Override
     public int hashCode() {
-        return Hashing.md5().newHasher().putInt(start).putInt(end).putUnencodedChars(method.key()).hash().asInt();
+        return Hashing.md5().newHasher().putUnencodedChars(id).putInt(start).putInt(end).putUnencodedChars(method.key()).hash().asInt();
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof BasicBlock) {
             BasicBlock block = (BasicBlock) obj;
-            return start == block.start && end == block.end && method.key().equals(block.method.key());
+            return id.equals(block.id) && start == block.start && end == block.end && method.key().equals(block.method.key());
         }
         return false;
     }
