@@ -21,7 +21,7 @@ import static org.objectweb.asm.tree.AbstractInsnNode.*;
 public final class Assembly {
     private static final String[] JAVA_IDENTIFIERS = {"abstract", "assert", "boolean",
             "break", "byte", "case", "catch", "char", "class", "const",
-            "continue", "default", "do", "double", "else", "extends", "false",
+            "continue", "default", "do", "double", "else","enum", "extends", "false",
             "final", "finally", "float", "for", "goto", "if", "implements",
             "import", "instanceof", "int", "interface", "long", "native",
             "new", "null", "package", "private", "protected", "public",

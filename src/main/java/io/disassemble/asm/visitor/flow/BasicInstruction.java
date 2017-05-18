@@ -47,7 +47,14 @@ public class BasicInstruction {
     }
 
     @Override
+    public boolean equals(Object o) {
+        return o instanceof BasicInstruction && insn.getOpcode() == ((BasicInstruction) o).insn.getOpcode() && block.equals(((BasicInstruction) o).block);
+    }
+
+    @Override
     public int hashCode() {
-        return insn.hashCode();
+        int result = block.hashCode();
+        result = 31 * result + insn.getOpcode();
+        return result;
     }
 }

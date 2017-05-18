@@ -1,5 +1,6 @@
 package io.disassemble.asm.visitor.flow;
 
+import com.google.common.hash.Hashing;
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Assembly;
 import org.objectweb.asm.tree.JumpInsnNode;
@@ -226,7 +227,7 @@ public class BasicBlock {
      * Prints the block out in a readable manner.
      *
      * @param printed An empty or pre-filled list used for preventing StackOverflowExceptions
-     * @param max The maximum amount of blocks to print out.
+     * @param max     The maximum amount of blocks to print out.
      */
     public void print(List<BasicBlock> printed, int max) {
         printBlock(this, "", printed, 0, max);
@@ -247,5 +248,19 @@ public class BasicBlock {
      */
     public void print() {
         print(Integer.MAX_VALUE);
+    }
+
+    @Override
+    public int hashCode() {
+        return Hashing.md5().newHasher().putInt(start).putInt(end).putUnencodedChars(method.key()).hash().asInt();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof BasicBlock) {
+            BasicBlock block = (BasicBlock) obj;
+            return start == block.start && end == block.end && method.key().equals(block.method.key());
+        }
+        return false;
     }
 }
