@@ -48,7 +48,8 @@ public class BasicInstruction {
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof BasicInstruction && insn.getOpcode() == ((BasicInstruction) o).insn.getOpcode() && block.equals(((BasicInstruction) o).block);
+        return super.equals(o);
+        //Broken return o instanceof BasicInstruction && insn.getOpcode() == ((BasicInstruction) o).insn.getOpcode() && block.equals(((BasicInstruction) o).block);
     }
 
     @Override
