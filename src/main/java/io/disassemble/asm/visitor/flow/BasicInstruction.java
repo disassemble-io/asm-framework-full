@@ -53,8 +53,6 @@ public class BasicInstruction {
 
     @Override
     public int hashCode() {
-        int result = block.hashCode();
-        result = 31 * result + insn.getOpcode();
-        return result;
+      return insn.hashCode();
     }
 }
