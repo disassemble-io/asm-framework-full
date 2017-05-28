@@ -2,18 +2,16 @@ package io.disassemble.asm.visitor.expr;
 
 import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassMethod;
-import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.util.DupSizeCalculator;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
-import jdk.internal.org.objectweb.asm.util.Printer;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
-
-import static org.objectweb.asm.Opcodes.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Tyler Sedlar
