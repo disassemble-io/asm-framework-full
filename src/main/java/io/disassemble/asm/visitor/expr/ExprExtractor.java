@@ -13,7 +13,7 @@ public class ExprExtractor {
 
     private static final String EMPTY_STRING = "";
 
-    public static String extract(BasicExpr<AbstractInsnNode> expr) {
+    public static String extract(BasicExpr expr) {
         AbstractInsnNode insn = expr.insn();
         if (insn instanceof IntInsnNode) {
             int operand = ((IntInsnNode) insn).operand;

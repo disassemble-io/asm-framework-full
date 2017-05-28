@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.JumpInsnNode;
  *
  * A BasicExpr that represents a branch.
  */
-public class BranchExpr extends BasicExpr<JumpInsnNode> {
+public class BranchExpr extends BasicExpr {
 
     public BranchExpr(ClassMethod method, JumpInsnNode insn, int type) {
         super(method, insn, type);

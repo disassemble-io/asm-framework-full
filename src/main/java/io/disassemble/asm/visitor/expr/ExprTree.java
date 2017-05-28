@@ -1,19 +1,14 @@
 package io.disassemble.asm.visitor.expr;
 
-import io.disassemble.asm.ClassFactory;
 import io.disassemble.asm.ClassMethod;
-import io.disassemble.asm.util.Assembly;
-import io.disassemble.asm.util.Grep;
 import io.disassemble.asm.visitor.expr.grep.GrepExpr;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
-import io.disassemble.asm.visitor.expr.node.MethodExpr;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.FieldInsnNode;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.function.Consumer;
-
-import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Tyler Sedlar
@@ -21,19 +16,19 @@ import static org.objectweb.asm.Opcodes.*;
  * <p>
  * TODO: add WhileLoopExpr/ForLoopExpr
  */
-public class ExprTree implements Iterable<BasicExpr<AbstractInsnNode>> {
+public class ExprTree implements Iterable<BasicExpr> {
 
     public static final String VERBOSE_EXPRESSION_TREE = "ExprTree#VERBOSE_EXPRESSION_TREE";
 
     private final ClassMethod method;
-    private final Deque<BasicExpr<AbstractInsnNode>> expressions;
+    private final Deque<BasicExpr> expressions;
 
     /**
      * Constructs an ExprTree based on the given expressions.
      *
      * @param expressions The expressions to build an ExprTree for.
      */
-    public ExprTree(ClassMethod method, Deque<BasicExpr<AbstractInsnNode>> expressions) {
+    public ExprTree(ClassMethod method, Deque<BasicExpr> expressions) {
         this.method = method;
         this.expressions = expressions;
     }
@@ -43,7 +38,7 @@ public class ExprTree implements Iterable<BasicExpr<AbstractInsnNode>> {
      *
      * @return The expression used to construct this ExprTree.
      */
-    public Deque<BasicExpr<AbstractInsnNode>> expressions() {
+    public Deque<BasicExpr> expressions() {
         return expressions;
     }
 
@@ -64,7 +59,7 @@ public class ExprTree implements Iterable<BasicExpr<AbstractInsnNode>> {
     }
 
     @SuppressWarnings("unchecked")
-    private void accept(ExprTreeVisitor visitor, BasicExpr<AbstractInsnNode> parent) {
+    private void accept(ExprTreeVisitor visitor, BasicExpr parent) {
         visitor.visitExpr(parent);
         parent.forEach(expr -> accept(visitor, expr));
     }
@@ -76,14 +71,14 @@ public class ExprTree implements Iterable<BasicExpr<AbstractInsnNode>> {
      */
     public void accept(ExprTreeVisitor visitor) {
         visitor.visitStart(this);
-        for (BasicExpr<AbstractInsnNode> expr : this) {
+        for (BasicExpr expr : this) {
             accept(visitor, expr);
         }
         visitor.visitEnd(this);
     }
 
     @Override
-    public Iterator<BasicExpr<AbstractInsnNode>> iterator() {
+    public Iterator<BasicExpr> iterator() {
         return expressions.iterator();
     }
 

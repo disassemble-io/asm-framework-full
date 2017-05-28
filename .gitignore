@@ -88,3 +88,13 @@ target/
 
 # Project specifics
 src/test/excluded-java/*
+
+# VSCode
+.editorconfig
+.classpath
+.project
+.settings
+.vscode
+run.bat
+run.scpt
+run.sh

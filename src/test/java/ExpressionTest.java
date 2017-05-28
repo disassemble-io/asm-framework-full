@@ -1,17 +1,13 @@
 import io.disassemble.asm.ClassFactory;
-import io.disassemble.asm.ClassField;
 import io.disassemble.asm.JarArchive;
-import io.disassemble.asm.visitor.expr.ExprTree;
-import io.disassemble.asm.visitor.expr.ExprTreeBuilder;
-import io.disassemble.asm.visitor.expr.MultiExprTreeVisitor;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import visitor.EuclideanVisitor;
-import visitor.ParameterVisitor;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 

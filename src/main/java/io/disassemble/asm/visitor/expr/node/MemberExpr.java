@@ -3,14 +3,11 @@ package io.disassemble.asm.visitor.expr.node;
 import io.disassemble.asm.ClassMethod;
 import org.objectweb.asm.tree.AbstractInsnNode;
 
-import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-
 /**
  * @author Tyler Sedlar
  * @since 6/21/16
  */
-public abstract class MemberExpr<T extends AbstractInsnNode> extends BasicExpr<T> {
+public abstract class MemberExpr<T extends AbstractInsnNode> extends BasicExpr {
 
     public MemberExpr(ClassMethod method, T insn, int type) {
         super(method, insn, type);

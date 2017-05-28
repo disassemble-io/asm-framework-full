@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.VarInsnNode;
  * @author Tyler Sedlar
  * @since 6/21/16
  */
-public class VarExpr extends BasicExpr<VarInsnNode> {
+public class VarExpr extends BasicExpr {
 
     public VarExpr(ClassMethod method, VarInsnNode insn, int type) {
         super(method, insn, type);
@@ -19,6 +19,6 @@ public class VarExpr extends BasicExpr<VarInsnNode> {
      * @return The variable index this expression is acting on.
      */
     public int var() {
-        return insn.var;
+        return ((VarInsnNode) insn).var;
     }
 }

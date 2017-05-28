@@ -227,7 +227,7 @@ public class BasicBlock {
      * Prints the block out in a readable manner.
      *
      * @param printed An empty or pre-filled list used for preventing StackOverflowExceptions
-     * @param max     The maximum amount of blocks to print out.
+     * @param max     The maximum amount of blocks to printWithIndent out.
      */
     public void print(List<BasicBlock> printed, int max) {
         printBlock(this, "", printed, 0, max);
@@ -236,7 +236,7 @@ public class BasicBlock {
     /**
      * Prints the block out in a readable manner.
      *
-     * @param max The maximum amount of blocks to print out.
+     * @param max The maximum amount of blocks to printWithIndent out.
      */
     public void print(int max) {
         List<BasicBlock> printed = new ArrayList<>();

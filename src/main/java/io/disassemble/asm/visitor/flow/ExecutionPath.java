@@ -188,7 +188,7 @@ public class ExecutionPath {
     /**
      * Prints out the path's BasicBlocks.
      *
-     * @param max The maximum amount of blocks to print out.
+     * @param max The maximum amount of blocks to printWithIndent out.
      */
     public void print(int max) {
         List<BasicBlock> printed = new ArrayList<>();

@@ -9,12 +9,12 @@ import org.objectweb.asm.tree.AbstractInsnNode;
  */
 public class ExpressionVisitor extends InterpretingVisitor {
 
-    public void visitExpr(BasicExpr<AbstractInsnNode> expr) {
+    public void visitExpr(BasicExpr expr) {
     }
 
     @SuppressWarnings("unchecked")
     private void handleInsn(AbstractInsnNode insn, int type) {
-        BasicExpr<AbstractInsnNode> expr = BasicExpr.resolve(method, insn, type);
+        BasicExpr expr = BasicExpr.resolve(method, insn, type);
         visitExpr(expr);
     }
 

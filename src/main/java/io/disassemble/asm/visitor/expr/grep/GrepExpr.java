@@ -3,7 +3,6 @@ package io.disassemble.asm.visitor.expr.grep;
 import io.disassemble.asm.util.Grep;
 import io.disassemble.asm.visitor.expr.ExprTreeVisitor;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
-import io.disassemble.asm.visitor.expr.node.MethodExpr;
 
 import java.util.List;
 import java.util.Map;

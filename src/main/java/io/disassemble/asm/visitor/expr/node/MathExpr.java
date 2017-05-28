@@ -12,7 +12,7 @@ import java.util.Optional;
  *
  * A BasicExpr that represents an equation.
  */
-public class MathExpr extends BasicExpr<AbstractInsnNode> {
+public class MathExpr extends BasicExpr {
 
     public MathExpr(ClassMethod method, AbstractInsnNode insn, int type) {
         super(method, insn, type);

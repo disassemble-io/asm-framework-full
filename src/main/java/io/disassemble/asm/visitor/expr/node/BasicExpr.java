@@ -3,6 +3,7 @@ package io.disassemble.asm.visitor.expr.node;
 import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.util.IndexedDeque;
+import io.disassemble.asm.visitor.expr.ExprTreeVisitor;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
@@ -14,7 +15,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Tyler Sedlar
  * @since 6/16/16
  */
-public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr<AbstractInsnNode>> {
+public class BasicExpr implements Iterable<BasicExpr> {
 
     /**
      * An indexed string representation of expression types.
@@ -33,11 +34,11 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
     public final ClassMethod method;
     public final int type;
 
-    protected final T insn;
+    protected final AbstractInsnNode insn;
 
     private BasicExpr left, right, parent;
 
-    final IndexedDeque<BasicExpr<AbstractInsnNode>> children = new IndexedDeque<>();
+    final IndexedDeque<BasicExpr> children = new IndexedDeque<>();
 
     /**
      * Constructs a BasicExpr for the given instruction and type.
@@ -46,7 +47,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      * @param insn   The instruction to use.
      * @param type   The type of expression.
      */
-    public BasicExpr(ClassMethod method, T insn, int type) {
+    public BasicExpr(ClassMethod method, AbstractInsnNode insn, int type) {
         this.method = method;
         this.insn = insn;
         this.type = type;
@@ -57,12 +58,12 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      *
      * @return The base instruction for this expression.
      */
-    public T insn() {
+    public AbstractInsnNode insn() {
         return insn;
     }
 
     @Override
-    public Iterator<BasicExpr<AbstractInsnNode>> iterator() {
+    public Iterator<BasicExpr> iterator() {
         return children().iterator();
     }
 
@@ -170,7 +171,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      *
      * @param expr The expression to add.
      */
-    public void addChild(BasicExpr<AbstractInsnNode> expr) {
+    public void addChild(BasicExpr expr) {
         expr.parent = this;
         children.addFirst(expr);
     }
@@ -180,7 +181,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      *
      * @return An IndexedDeque of expressions belonging to this expression.
      */
-    public IndexedDeque<BasicExpr<AbstractInsnNode>> children() {
+    public IndexedDeque<BasicExpr> children() {
         return children;
     }
 
@@ -194,6 +195,33 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
     }
 
     /**
+     * Checks if the given child is within this expression's tree.
+     *
+     * @param expr The child to check existence for.
+     * @return <tt>true</tt> if the child exists, otherwise <tt>false</tt>.
+     */
+    public boolean hasChildInTree(BasicExpr expr) {
+        for (BasicExpr child : children()) {
+            if (child.equals(expr) || child.hasChildInTree(expr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Visits every child within this expression's tree.
+     *
+     * @param visitor The visitor to apply.
+     */
+    public void visitTree(ExprTreeVisitor visitor) {
+        children().forEach(child -> {
+            visitor.visitExpr(child);
+            child.visitTree(visitor);
+        });
+    }
+
+    /**
      * Returns this expression as its source counterpart.
      *
      * @return This expression as its source counterpart.
@@ -202,10 +230,13 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
         return "";
     }
 
-    private void print(String indent) {
+    /**
+     * Pretty-prints this expression, starting with the given indent.
+     */
+    public void printWithIndent(String indent) {
         System.out.println(indent + Assembly.toString(insn) + " (" + LABELS[type] + ')');
         for (BasicExpr expr : children) {
-            expr.print(indent + "  ");
+            expr.printWithIndent(indent + "  ");
         }
     }
 
@@ -213,7 +244,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      * Pretty-prints this expression.
      */
     public void print() {
-        print("");
+        printWithIndent("");
     }
 
     /**
@@ -225,11 +256,13 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
      * @return The respective BasicExpr for the given instruction and type.
      */
     public static BasicExpr resolve(ClassMethod method, AbstractInsnNode insn, int type) {
+        // System.out.println("BasicExpr#resolve @ " + Assembly.toString(insn) + ", type = " + LABELS[type]);
         switch (insn.getOpcode()) {
             case GETFIELD:
             case GETSTATIC:
             case PUTFIELD:
             case PUTSTATIC: {
+                // System.out.println("    FieldExpr");
                 return new FieldExpr(method, (FieldInsnNode) insn, type);
             }
             case INVOKEINTERFACE:
@@ -237,9 +270,11 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case INVOKESPECIAL:
             case INVOKESTATIC:
             case INVOKEDYNAMIC: {
+                // System.out.println("    MethodExpr");
                 return new MethodExpr(method, (MethodInsnNode) insn, type);
             }
             case LDC: {
+                // System.out.println("    ConstExpr");
                 return new ConstExpr(method, (LdcInsnNode) insn, type);
             }
             case IADD:
@@ -274,6 +309,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case LOR:
             case IXOR:
             case LXOR: {
+                // System.out.println("    MathExpr");
                 return new MathExpr(method, insn, type);
             }
             case IF_ICMPEQ:
@@ -284,6 +320,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case IF_ICMPLE:
             case IF_ACMPEQ:
             case IF_ACMPNE: {
+                // System.out.println("    CompBranchExpr");
                 return new CompBranchExpr(method, (JumpInsnNode) insn, type);
             }
             case IFEQ:
@@ -294,6 +331,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case IFLE:
             case IFNULL:
             case IFNONNULL: {
+                // System.out.println("    BranchExpr");
                 return new BranchExpr(method, (JumpInsnNode) insn, type);
             }
             case ILOAD:
@@ -301,6 +339,7 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case FLOAD:
             case LLOAD:
             case ALOAD: {
+                // System.out.println("    VarLoadExpr");
                 return new VarLoadExpr(method, (VarInsnNode) insn, type);
             }
             case ISTORE:
@@ -308,9 +347,11 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case FSTORE:
             case LSTORE:
             case ASTORE: {
+                // System.out.println("    VarStoreExpr");
                 return new VarStoreExpr(method, (VarInsnNode) insn, type);
             }
             case RET: {
+                // System.out.println("    VarExpr");
                 return new VarExpr(method, (VarInsnNode) insn, type);
             }
             case BIPUSH:
@@ -322,10 +363,12 @@ public class BasicExpr<T extends AbstractInsnNode> implements Iterable<BasicExpr
             case ICONST_3:
             case ICONST_4:
             case ICONST_5: {
+                // System.out.println("    PushExpr");
                 return new PushExpr(method, insn, type);
             }
             default: {
-                return new BasicExpr<>(method, insn, type);
+                // System.out.println("    BasicExpr");
+                return new BasicExpr(method, insn, type);
             }
         }
     }

@@ -10,7 +10,7 @@ import static org.objectweb.asm.Opcodes.*;
  * @author Tyler Sedlar
  * @since 6/26/16
  */
-public class PushExpr extends BasicExpr<AbstractInsnNode> {
+public class PushExpr extends BasicExpr {
 
     private boolean intInsn;
 

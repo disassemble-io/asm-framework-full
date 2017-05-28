@@ -1,17 +1,11 @@
 package io.disassemble.asm.visitor.expr.node;
 
 import io.disassemble.asm.ClassMethod;
-import io.disassemble.asm.util.Grep;
 import io.disassemble.asm.visitor.expr.ExprExtractor;
-import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
-import java.util.*;
-
-import static org.objectweb.asm.Opcodes.INVOKEDYNAMIC;
-import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.LDC;
+import static org.objectweb.asm.Opcodes.*;
 
 /**
  * @author Tyler Sedlar
@@ -25,22 +19,22 @@ public class MethodExpr extends MemberExpr<MethodInsnNode> {
 
     @Override
     public String key() {
-        return (insn.owner + '.' + insn.name + insn.desc);
+        return (owner() + '.' + name() + desc());
     }
 
     @Override
     public String owner() {
-        return insn.owner;
+        return ((MethodInsnNode) insn).owner;
     }
 
     @Override
     public String name() {
-        return insn.name;
+        return ((MethodInsnNode) insn).name;
     }
 
     @Override
     public String desc() {
-        return insn.desc;
+        return ((MethodInsnNode) insn).desc;
     }
 
     @Override
@@ -55,7 +49,7 @@ public class MethodExpr extends MemberExpr<MethodInsnNode> {
 
     // This obviously needs to be improved, it's for debugging purposes, currently.
     private boolean hasOpaque() {
-        BasicExpr<AbstractInsnNode> expr = children.peekLast();
+        BasicExpr expr = children.peekLast();
         return expr.opcode() == LDC && ((LdcInsnNode) expr.insn).cst instanceof Number;
     }
 
@@ -71,7 +65,7 @@ public class MethodExpr extends MemberExpr<MethodInsnNode> {
             stripped = true;
         }
         int idx = 0;
-        for (BasicExpr<AbstractInsnNode> child : children) {
+        for (BasicExpr child : children) {
             if (skipFirst && child == children.peekFirst()) {
                 continue;
             } else if (stripped && (idx + 1) > args.length) {

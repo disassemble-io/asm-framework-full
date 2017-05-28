@@ -5,10 +5,7 @@ import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.visitor.expr.node.BasicExpr;
 import io.disassemble.asm.visitor.expr.node.MethodExpr;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.LdcInsnNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -32,14 +29,15 @@ public class ExprTreeBuilder {
         if (method == null) {
             return Optional.empty();
         }
-        List<AbstractInsnNode> stack = Arrays.asList(method.instructions().toArray());
+        List<AbstractInsnNode> stack = new ArrayList<>(Arrays.asList(method.instructions().toArray()));
+        stack.removeIf(insn -> insn instanceof LabelNode || insn instanceof LineNumberNode);
         Collections.reverse(stack);
         Iterator<AbstractInsnNode> itr = stack.iterator();
-        Deque<BasicExpr<AbstractInsnNode>> exprs = new ArrayDeque<>();
-        BasicExpr<AbstractInsnNode> prev = null;
+        Deque<BasicExpr> exprs = new ArrayDeque<>();
+        BasicExpr prev = null;
         while (itr.hasNext()) {
             AbstractInsnNode next = itr.next();
-            BasicExpr<AbstractInsnNode> expr = BasicExpr.resolve(method, next, BasicExpr.resolveType(next));
+            BasicExpr expr = BasicExpr.resolve(method, next, BasicExpr.resolveType(next));
             if (prev != null) {
                 expr.setRight(prev);
                 prev.setLeft(expr);
@@ -69,17 +67,18 @@ public class ExprTreeBuilder {
 
     @SuppressWarnings("unchecked")
     private static void handleExpr(ClassMethod method, Iterator<AbstractInsnNode> itr,
-                                   BasicExpr<AbstractInsnNode> expr,
-                                   BasicExpr<AbstractInsnNode> parent, String indent) {
+                                   BasicExpr expr, BasicExpr parent, String indent) {
         if (parent != null) {
             parent.addChild(expr);
         }
         // the amount of instructions that need to be 'popped'
         int proceeding = expr.proceeding();
-        BasicExpr<AbstractInsnNode> prev = null;
+//        System.out.println(indent + Assembly.toString(expr.insn()) + " (" + BasicExpr.LABELS[expr.type] + ", " +
+//                proceeding + ")");
+        BasicExpr prev = null;
         for (int i = 0; i < proceeding; i++) {
             AbstractInsnNode next = itr.next();
-            BasicExpr<AbstractInsnNode> child = BasicExpr.resolve(method, next, BasicExpr.resolveType(next));
+            BasicExpr child = BasicExpr.resolve(method, next, BasicExpr.resolveType(next));
             if (prev != null) {
                 // setRight/setLeft instead of setLeft/setRight due to Collections#reverse in #build
                 child.setRight(prev);
