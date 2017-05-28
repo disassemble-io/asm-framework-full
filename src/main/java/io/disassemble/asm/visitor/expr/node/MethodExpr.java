@@ -13,8 +13,16 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class MethodExpr extends MemberExpr<MethodInsnNode> {
 
-    public MethodExpr(ClassMethod method, MethodInsnNode insn, int type) {
-        super(method, insn, type);
+    /**
+     * Constructs a BasicExpr for the given instruction and type.
+     *
+     * @param method The method this expression is in.
+     * @param insn   The instruction to use.
+     * @param index  The index of this instruction in the reverse stack.
+     * @param size   The amount of slots taken up by this instruction.
+     */
+    public MethodExpr(ClassMethod method, MethodInsnNode insn, int index, int size) {
+        super(method, insn, index, size);
     }
 
     @Override

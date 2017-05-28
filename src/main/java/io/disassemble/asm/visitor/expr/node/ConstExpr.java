@@ -13,8 +13,16 @@ public class ConstExpr extends BasicExpr {
 
     private final LdcInsnNode ldc;
 
-    public ConstExpr(ClassMethod method, LdcInsnNode ldc, int type) {
-        super(method, ldc, type);
+    /**
+     * Constructs a BasicExpr for the given instruction and type.
+     *
+     * @param method The method this expression is in.
+     * @param ldc   The instruction to use.
+     * @param index  The index of this instruction in the reverse stack.
+     * @param size   The amount of slots taken up by this instruction.
+     */
+    public ConstExpr(ClassMethod method, LdcInsnNode ldc, int index, int size) {
+        super(method, ldc, index, size);
         this.ldc = ldc;
     }
 

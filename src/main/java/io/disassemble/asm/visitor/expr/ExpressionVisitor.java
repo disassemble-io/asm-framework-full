@@ -13,8 +13,10 @@ public class ExpressionVisitor extends InterpretingVisitor {
     }
 
     @SuppressWarnings("unchecked")
-    private void handleInsn(AbstractInsnNode insn, int type) {
-        BasicExpr expr = BasicExpr.resolve(method, insn, type);
+    private void handleInsn(AbstractInsnNode insn) {
+        int reverseStackIdx = (method.instructions().size() - method.instructions().indexOf(insn));
+        int size = ExprTreeBuilder.resolveSize(insn);
+        BasicExpr expr = BasicExpr.resolve(method, insn, reverseStackIdx, size);
         visitExpr(expr);
     }
 
@@ -24,31 +26,31 @@ public class ExpressionVisitor extends InterpretingVisitor {
 
     @Override
     public void visitBinaryOperation(AbstractInsnNode insn) {
-        handleInsn(insn, BasicExpr.OP_BINARY);
+        handleInsn(insn);
     }
 
     @Override
     public void visitNaryOperation(AbstractInsnNode insn) {
-        handleInsn(insn, BasicExpr.OP_NARY);
+        handleInsn(insn);
     }
 
     @Override
     public void visitNullaryOperation(AbstractInsnNode insn) {
-        handleInsn(insn, BasicExpr.OP_NULLARY);
+        handleInsn(insn);
     }
 
     @Override
     public void visitQuaternaryOperation(AbstractInsnNode insn) {
-        handleInsn(insn, BasicExpr.OP_QUATERNARY);
+        handleInsn(insn);
     }
 
     @Override
     public void visitTernaryOperation(AbstractInsnNode insn) {
-        handleInsn(insn, BasicExpr.OP_TERNARY);
+        handleInsn(insn);
     }
 
     @Override
     public void visitUnaryOperation(AbstractInsnNode insn) {
-        handleInsn(insn, BasicExpr.OP_UNARY);
+        handleInsn(insn);
     }
 }

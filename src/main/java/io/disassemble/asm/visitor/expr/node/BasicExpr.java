@@ -4,7 +4,6 @@ import io.disassemble.asm.ClassMethod;
 import io.disassemble.asm.util.Assembly;
 import io.disassemble.asm.util.IndexedDeque;
 import io.disassemble.asm.visitor.expr.ExprTreeVisitor;
-import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 
 import java.util.Iterator;
@@ -17,22 +16,8 @@ import static org.objectweb.asm.Opcodes.*;
  */
 public class BasicExpr implements Iterable<BasicExpr> {
 
-    /**
-     * An indexed string representation of expression types.
-     */
-    public static final String[] LABELS = {
-            "binary", "nary", "nullary", "quaternary", "ternary", "unary"
-    };
-
-    public static final int OP_BINARY = 0;
-    public static final int OP_NARY = 1;
-    public static final int OP_NULLARY = 2;
-    public static final int OP_QUATERNARY = 3;
-    public static final int OP_TERNARY = 4;
-    public static final int OP_UNARY = 5;
-
     public final ClassMethod method;
-    public final int type;
+    public final int index, size;
 
     protected final AbstractInsnNode insn;
 
@@ -45,12 +30,14 @@ public class BasicExpr implements Iterable<BasicExpr> {
      *
      * @param method The method this expression is in.
      * @param insn   The instruction to use.
-     * @param type   The type of expression.
+     * @param index  The index of this instruction in the reverse stack.
+     * @param size   The amount of slots taken up by this instruction.
      */
-    public BasicExpr(ClassMethod method, AbstractInsnNode insn, int type) {
+    public BasicExpr(ClassMethod method, AbstractInsnNode insn, int index, int size) {
         this.method = method;
         this.insn = insn;
-        this.type = type;
+        this.index = index;
+        this.size = size;
     }
 
     /**
@@ -65,60 +52,6 @@ public class BasicExpr implements Iterable<BasicExpr> {
     @Override
     public Iterator<BasicExpr> iterator() {
         return children().iterator();
-    }
-
-    /**
-     * Gets the amount of instructions that are expected to be followed by this instruction.
-     *
-     * @return The amount of instructions that are expected to be followed by this instruction.
-     */
-    public int proceeding() {
-        switch (type) {
-            case OP_UNARY: {
-                // Some IincInsnNode's denote i++, ++i, --i, i-- instead of a for loop.
-                // This is counteracted by checking if its #var is acting upon the method's parameter.
-                if (opcode() == IINC) {
-                    int var = ((IincInsnNode) insn).var;
-                    Type[] types = method.parameterTypes();
-                    // nonstatic methods include ALOAD_0, so this arg needs to be taken off in indexing.
-                    int arg = ((method.access() & ACC_STATIC) == 0 ? (var - 1) : var);
-                    if (arg < types.length) {
-                        return 0;
-                    }
-                }
-                return 1;
-            }
-            case OP_BINARY: {
-                return 2;
-            }
-            case OP_TERNARY: {
-                return 3;
-            }
-            case OP_QUATERNARY: {
-                return 4;
-            }
-            case OP_NARY: {
-                if (opcode() == DUP) {
-                    return (parent() != null && parent().opcode() == INVOKESPECIAL ? 1 : 0);
-                } else {
-                    boolean loadVar = (opcode() == INVOKEVIRTUAL || opcode() == INVOKESPECIAL ||
-                            opcode() == INVOKEINTERFACE);
-                    if (loadVar || opcode() == INVOKESTATIC || opcode() == INVOKEDYNAMIC) {
-                        String desc = ((MethodInsnNode) insn).desc;
-                        int sizes = Type.getArgumentsAndReturnSizes(desc);
-                        // argSize = (sizes >> 2)
-                        // retSize = (sizes & 0x03)
-                        // subtract 1 if loadVar since INVOKESTATIC/INVOKEDYNAMIC do not need to call ALOAD_0
-                        return (sizes >> 2) - (loadVar ? 0 : 1);
-                    } else if (opcode() == MULTIANEWARRAY) {
-                        return ((MultiANewArrayInsnNode) insn).dims;
-                    }
-                }
-            }
-            default: {
-                return 0;
-            }
-        }
     }
 
     /**
@@ -234,7 +167,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
      * Pretty-prints this expression, starting with the given indent.
      */
     public void printWithIndent(String indent) {
-        System.out.println(indent + Assembly.toString(insn) + " (" + LABELS[type] + ')');
+        System.out.println(indent + Assembly.toString(insn) + " (" + size + ")");
         for (BasicExpr expr : children) {
             expr.printWithIndent(indent + "  ");
         }
@@ -252,18 +185,18 @@ public class BasicExpr implements Iterable<BasicExpr> {
      *
      * @param method The method the given instruction belongs to.
      * @param insn   The instruction to resolve.
-     * @param type   The type of expression.
+     * @param index  The index of this expression in the reverse stack.
+     * @param size   The amount of slots taken up by this instruction.
      * @return The respective BasicExpr for the given instruction and type.
      */
-    public static BasicExpr resolve(ClassMethod method, AbstractInsnNode insn, int type) {
-        // System.out.println("BasicExpr#resolve @ " + Assembly.toString(insn) + ", type = " + LABELS[type]);
+    public static BasicExpr resolve(ClassMethod method, AbstractInsnNode insn, int index, int size) {
         switch (insn.getOpcode()) {
             case GETFIELD:
             case GETSTATIC:
             case PUTFIELD:
             case PUTSTATIC: {
                 // System.out.println("    FieldExpr");
-                return new FieldExpr(method, (FieldInsnNode) insn, type);
+                return new FieldExpr(method, (FieldInsnNode) insn, index, size);
             }
             case INVOKEINTERFACE:
             case INVOKEVIRTUAL:
@@ -271,11 +204,11 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case INVOKESTATIC:
             case INVOKEDYNAMIC: {
                 // System.out.println("    MethodExpr");
-                return new MethodExpr(method, (MethodInsnNode) insn, type);
+                return new MethodExpr(method, (MethodInsnNode) insn, index, size);
             }
             case LDC: {
                 // System.out.println("    ConstExpr");
-                return new ConstExpr(method, (LdcInsnNode) insn, type);
+                return new ConstExpr(method, (LdcInsnNode) insn, index, size);
             }
             case IADD:
             case LADD:
@@ -310,7 +243,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IXOR:
             case LXOR: {
                 // System.out.println("    MathExpr");
-                return new MathExpr(method, insn, type);
+                return new MathExpr(method, insn, index, size);
             }
             case IF_ICMPEQ:
             case IF_ICMPNE:
@@ -321,7 +254,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IF_ACMPEQ:
             case IF_ACMPNE: {
                 // System.out.println("    CompBranchExpr");
-                return new CompBranchExpr(method, (JumpInsnNode) insn, type);
+                return new CompBranchExpr(method, (JumpInsnNode) insn, index, size);
             }
             case IFEQ:
             case IFNE:
@@ -332,7 +265,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case IFNULL:
             case IFNONNULL: {
                 // System.out.println("    BranchExpr");
-                return new BranchExpr(method, (JumpInsnNode) insn, type);
+                return new BranchExpr(method, (JumpInsnNode) insn, index, size);
             }
             case ILOAD:
             case DLOAD:
@@ -340,7 +273,7 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case LLOAD:
             case ALOAD: {
                 // System.out.println("    VarLoadExpr");
-                return new VarLoadExpr(method, (VarInsnNode) insn, type);
+                return new VarLoadExpr(method, (VarInsnNode) insn, index, size);
             }
             case ISTORE:
             case DSTORE:
@@ -348,11 +281,11 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case LSTORE:
             case ASTORE: {
                 // System.out.println("    VarStoreExpr");
-                return new VarStoreExpr(method, (VarInsnNode) insn, type);
+                return new VarStoreExpr(method, (VarInsnNode) insn, index, size);
             }
             case RET: {
                 // System.out.println("    VarExpr");
-                return new VarExpr(method, (VarInsnNode) insn, type);
+                return new VarExpr(method, (VarInsnNode) insn, index, size);
             }
             case BIPUSH:
             case SIPUSH:
@@ -364,189 +297,11 @@ public class BasicExpr implements Iterable<BasicExpr> {
             case ICONST_4:
             case ICONST_5: {
                 // System.out.println("    PushExpr");
-                return new PushExpr(method, insn, type);
+                return new PushExpr(method, insn, index, size);
             }
             default: {
                 // System.out.println("    BasicExpr");
-                return new BasicExpr(method, insn, type);
-            }
-        }
-    }
-
-    /**
-     * Retrieves the type of the given instruction.
-     *
-     * @param insn The instruction to get a type for.
-     * @return The type of the given instruction.
-     */
-    public static int resolveType(AbstractInsnNode insn) {
-        int op = insn.getOpcode();
-        switch (op) {
-            case IADD:
-            case LADD:
-            case FADD:
-            case DADD:
-            case ISUB:
-            case LSUB:
-            case FSUB:
-            case DSUB:
-            case IMUL:
-            case LMUL:
-            case FMUL:
-            case DMUL:
-            case IDIV:
-            case LDIV:
-            case FDIV:
-            case DDIV:
-            case IREM:
-            case LREM:
-            case FREM:
-            case DREM:
-            case ISHL:
-            case LSHL:
-            case ISHR:
-            case LSHR:
-            case IUSHR:
-            case LUSHR:
-            case IAND:
-            case LAND:
-            case IOR:
-            case LOR:
-            case IXOR:
-            case LXOR:
-            case LCMP:
-            case FCMPL:
-            case FCMPG:
-            case DCMPL:
-            case DCMPG:
-            case IASTORE:
-            case BASTORE:
-            case LASTORE:
-            case FASTORE:
-            case DASTORE:
-            case AASTORE:
-            case CASTORE:
-            case SASTORE:
-            case IALOAD:
-            case LALOAD:
-            case FALOAD:
-            case DALOAD:
-            case AALOAD:
-            case BALOAD:
-            case CALOAD:
-            case SALOAD:
-            case IF_ICMPEQ:
-            case IF_ICMPNE:
-            case IF_ICMPLT:
-            case IF_ICMPGE:
-            case IF_ICMPGT:
-            case IF_ICMPLE:
-            case IF_ACMPEQ:
-            case IF_ACMPNE:
-            case PUTFIELD: {
-                return BasicExpr.OP_BINARY;
-            }
-            case DUP:
-            case INVOKEVIRTUAL:
-            case INVOKESPECIAL:
-            case INVOKESTATIC:
-            case INVOKEINTERFACE:
-            case MULTIANEWARRAY:
-            case INVOKEDYNAMIC: {
-                return BasicExpr.OP_NARY;
-            }
-            case ILOAD:
-            case LLOAD:
-            case FLOAD:
-            case DLOAD:
-            case ALOAD:
-            case SWAP:
-            case ACONST_NULL:
-            case ICONST_M1:
-            case ICONST_0:
-            case ICONST_1:
-            case ICONST_2:
-            case ICONST_3:
-            case ICONST_4:
-            case ICONST_5:
-            case LCONST_0:
-            case LCONST_1:
-            case FCONST_0:
-            case FCONST_1:
-            case FCONST_2:
-            case DCONST_0:
-            case DCONST_1:
-            case BIPUSH:
-            case SIPUSH:
-            case LDC:
-            case JSR:
-            case GETSTATIC:
-            case NEW:
-            case NEWARRAY:
-            case ANEWARRAY:
-            case CHECKCAST:
-            case INSTANCEOF: {
-                return BasicExpr.OP_NULLARY;
-            }
-            case DUP2_X2: {
-                return BasicExpr.OP_QUATERNARY;
-            }
-            case DUP2_X1:
-            case DUP_X2: {
-                return BasicExpr.OP_TERNARY;
-            }
-            case DUP2:
-            case DUP_X1:
-            case I2L:
-            case I2F:
-            case I2D:
-            case L2I:
-            case L2F:
-            case L2D:
-            case F2I:
-            case F2L:
-            case F2D:
-            case D2I:
-            case D2L:
-            case D2F:
-            case I2B:
-            case I2C:
-            case I2S:
-            case INEG:
-            case LNEG:
-            case FNEG:
-            case DNEG:
-            case IINC:
-            case IFEQ:
-            case IFNE:
-            case IFLT:
-            case IFGE:
-            case IFGT:
-            case IFLE:
-            case TABLESWITCH:
-            case LOOKUPSWITCH:
-            case PUTSTATIC:
-            case GETFIELD:
-            case ARRAYLENGTH:
-            case ATHROW:
-            case MONITORENTER:
-            case MONITOREXIT:
-            case IFNULL:
-            case IFNONNULL:
-            case ISTORE:
-            case LSTORE:
-            case FSTORE:
-            case DSTORE:
-            case ASTORE:
-            case IRETURN:
-            case LRETURN:
-            case FRETURN:
-            case DRETURN:
-            case ARETURN: {
-                return BasicExpr.OP_UNARY;
-            }
-            default: {
-                return BasicExpr.OP_NULLARY;
+                return new BasicExpr(method, insn, index, size);
             }
         }
     }
