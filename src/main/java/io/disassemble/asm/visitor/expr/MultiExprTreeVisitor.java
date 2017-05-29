@@ -56,6 +56,11 @@ public class MultiExprTreeVisitor extends ExprTreeVisitor {
         visitors.forEach(visitor -> visitor.visitVarExpr(expr));
     }
 
+
+    public final void visitPushExpr(PushExpr expr) {
+        visitors.forEach(visitor -> visitor.visitPushExpr(expr));
+    }
+
     public final void visitStart(ExprTree tree) {
         visitors.forEach(visitor -> visitor.visitStart(tree));
     }

@@ -32,6 +32,8 @@ public class ExprTreeVisitor {
             visitVarStoreExpr((VarStoreExpr) expr);
         } else if (expr instanceof VarExpr) {
             visitVarExpr((VarExpr) expr);
+        } else if (expr instanceof PushExpr) {
+            visitPushExpr((PushExpr) expr);
         } else {
             visitBasicExpr(expr);
         }
@@ -115,6 +117,14 @@ public class ExprTreeVisitor {
      * @param expr The expression to be visited.
      */
     public void visitVarExpr(VarExpr expr) {
+    }
+
+    /**
+     * Visits a PushExpr.
+     *
+     * @param expr The expression to be visited.
+     */
+    public void visitPushExpr(PushExpr expr) {
     }
 
     /**

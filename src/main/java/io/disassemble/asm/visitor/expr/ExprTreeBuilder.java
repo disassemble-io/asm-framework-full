@@ -34,7 +34,7 @@ public class ExprTreeBuilder {
         Collections.reverse(stack);
         List<BasicExpr> exprList = new ArrayList<>();
         AtomicInteger stackIdx = new AtomicInteger(0);
-        stack.forEach(insn -> exprList.add(new BasicExpr(method, insn, stackIdx.getAndIncrement(), resolveSize(insn))));
+        stack.forEach(insn -> exprList.add(BasicExpr.resolve(method, insn, stackIdx.getAndIncrement(), resolveSize(insn))));
         Deque<BasicExpr> exprs = new ArrayDeque<>();
         AtomicInteger idx = new AtomicInteger(0);
         BasicExpr prev = null;
