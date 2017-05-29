@@ -47,7 +47,7 @@ public class ExprTreeBuilder {
                 expr.setRight(prev);
                 prev.setLeft(expr);
             }
-            exprs.add(expr);
+            exprs.addFirst(expr);
             prev = expr;
         }
         return Optional.of(new ExprTree(method, exprs));
